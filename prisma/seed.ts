@@ -254,38 +254,26 @@ function generateLargeLibrary(): SeedExercise[] {
 }
 
 async function seedExercises() {
+  console.log('🌱 Starting exercise seed...');
   const exercises = generateLargeLibrary();
-
-  for (const exercise of exercises) {
-    const existing = await prisma.exercise.findFirst({
-      where: {
-        name: exercise.name,
-        createdByUserId: null,
-      },
-      select: { id: true },
-    });
-
-    if (existing) {
-      await prisma.exercise.update({
-        where: { id: existing.id },
-        data: {
-          muscleGroup: exercise.muscleGroup,
-          movementType: exercise.movementType,
-          equipment: exercise.equipment,
-          defaultRestSec: exercise.defaultRestSec,
-          fatigueFactor: exercise.fatigueFactor,
-        },
-      });
-      continue;
-    }
-
-    await prisma.exercise.create({
-      data: {
-        ...exercise,
-        isCustom: false,
-      },
-    });
-  }
+  console.log(`📊 Generated ${exercises.length} exercises to seed`);
+  
+  // Clear all existing system exercises
+  await prisma.exercise.deleteMany({
+    where: { createdByUserId: null }
+  });
+  console.log('🗑️  Cleared existing system exercises');
+  
+  // Batch insert all exercises
+  await prisma.exercise.createMany({
+    data: exercises.map(ex => ({
+      ...ex,
+      isCustom: false,
+    })),
+    skipDuplicates: true,
+  });
+  
+  console.log('✅ Exercises seeded successfully');
 }
 
 async function seedDemoUser() {
@@ -337,6 +325,7 @@ async function main() {
 
 main()
   .then(async () => {
+    console.log('✅ Database seeded successfully!');
     await prisma.$disconnect();
   })
   .catch(async (error) => {

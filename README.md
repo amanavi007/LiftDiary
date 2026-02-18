@@ -87,7 +87,7 @@ Defined in `prisma/schema.prisma` with enums and relations for:
 1. Configure env in `.env`:
 
 ```bash
-DATABASE_URL="postgresql://..."
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/liftdiary?sslmode=require"
 JWT_SECRET="replace-with-strong-random-secret"
 ```
 
@@ -98,10 +98,10 @@ npm install
 npm run db:generate
 ```
 
-3. Run migrations + seed:
+3. Push schema + seed:
 
 ```bash
-npm run db:migrate
+npm run db:push
 npm run db:seed
 ```
 
@@ -118,3 +118,24 @@ npm test
 ```
 
 Includes core tests for recommendation behavior and PR math.
+
+## Deploy to Vercel (Phone Testing)
+
+1. Create a hosted Postgres DB (Neon/Supabase/Vercel Postgres).
+2. In Vercel project settings, add env vars:
+	- `DATABASE_URL`
+	- `JWT_SECRET`
+3. In your local terminal, initialize the hosted DB with your schema + seed:
+
+```bash
+DATABASE_URL="<your-hosted-postgres-url>" npm run db:push
+DATABASE_URL="<your-hosted-postgres-url>" npm run db:seed
+```
+
+4. Push this repo to GitHub and import it into Vercel.
+5. Deploy and open the Vercel URL on your phone.
+
+### Notes
+
+- This project now targets PostgreSQL for production deployment.
+- If tutorial video embed fails for a specific exercise, use the fallback YouTube link shown in-session.
