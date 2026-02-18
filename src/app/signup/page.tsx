@@ -10,7 +10,7 @@ export default async function SignupPage() {
 
   return (
     <ScreenShell showNav={false}>
-      <div className="pt-12">
+      <div className="pt-4">
         <AuthForm mode="signup" />
       </div>
     </ScreenShell>
