@@ -15,7 +15,7 @@ export function MobileNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-safe pt-2">
-      <ul className="glass-card mx-auto grid max-w-md grid-cols-4 gap-2 rounded-2xl p-2">
+      <ul className="mx-auto grid max-w-md grid-cols-4 gap-2 rounded-2xl border border-white/25 bg-zinc-950/95 p-2 shadow-2xl backdrop-blur-xl">
         {links.map((link) => {
           const active = pathname.startsWith(link.href);
           return (
@@ -23,7 +23,7 @@ export function MobileNav() {
               <Link
                 href={link.href}
                 className={`block rounded-xl px-2 py-2 text-center text-xs font-semibold transition ${
-                  active ? "bg-white/20 text-white" : "text-zinc-300/90 hover:bg-white/10"
+                  active ? "bg-white/20 text-white" : "text-zinc-300/90 hover:bg-white/8"
                 }`}
               >
                 {link.label}
