@@ -63,7 +63,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="space-y-3">
+      <section className="space-y-3 pb-24">
         {exerciseRows.length === 0 ? <p className="text-sm text-zinc-200/70">Log sessions to unlock PR insights.</p> : null}
 
         {majorRows.length > 0 ? (

@@ -79,7 +79,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
         ))}
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 pb-24">
         {sessions.length === 0 ? <p className="text-sm text-zinc-200/70">No sessions yet.</p> : null}
         {sessions.map((session) => {
           const grouped = groupSetsByExercise(session.sets);
