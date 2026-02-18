@@ -94,10 +94,6 @@ export default async function HomePage() {
           <p className="text-xs text-zinc-300/70">Last 7 Days</p>
           <p className="text-lg font-semibold text-white">{sessionsThisWeek}</p>
         </div>
-        <div className="glass-card rounded-xl px-3 py-3">
-          <p className="text-xs text-zinc-300/70">Routine Days</p>
-          <p className="text-lg font-semibold text-white">{routineDays || "—"}</p>
-        </div>
         {!user.calibrationComplete && (
           <div className="glass-card rounded-xl px-3 py-3">
             <p className="text-xs text-zinc-300/70">Calibration</p>
