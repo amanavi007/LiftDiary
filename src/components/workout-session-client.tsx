@@ -37,6 +37,7 @@ type SessionPayload = {
     routineDay: { label: string };
     exercises: SessionExercise[];
     units: "LB" | "KG";
+    preferredRestSeconds: number | null;
   };
 };
 
@@ -269,7 +270,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         },
       }));
 
-      const rest = updatedExercise.exercise.defaultRestSec || 90;
+      const rest = updatedSession.preferredRestSeconds ?? (updatedExercise.exercise.defaultRestSec || 90);
       setActiveRestExercise(exerciseId);
       setRestDurationSeconds(rest);
       setRestSecondsLeft(rest);

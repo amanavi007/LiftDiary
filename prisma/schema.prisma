@@ -74,6 +74,7 @@ model User {
   experienceLevel                      ExperienceLevel?
   coachingStyle                        CoachingStyle     @default(BALANCED)
   units                                Units             @default(LB)
+  preferredRestSeconds                 Int?
   workoutsCompletedInCalibration       Int               @default(0)
   calibrationComplete                  Boolean           @default(false)
   calibrationLength                    Int               @default(7)

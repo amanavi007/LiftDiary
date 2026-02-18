@@ -59,6 +59,13 @@ const STYLES: CoachingStyle[] = ["CONSERVATIVE", "BALANCED", "AGGRESSIVE"];
 const SPLITS: SplitType[] = ["PUSH_PULL_LEGS", "UPPER_LOWER", "FULL_BODY", "BRO_SPLIT", "CUSTOM"];
 const FINAL_STEP = 7;
 
+const RECOMMENDED_REST_BY_GOAL: Record<Goal, { label: string; min: number; max: number; defaultSeconds: number }> = {
+  STRENGTH: { label: "3-5 minutes", min: 180, max: 300, defaultSeconds: 240 },
+  HYPERTROPHY: { label: "2-3 minutes", min: 120, max: 180, defaultSeconds: 150 },
+  ENDURANCE: { label: "30-90 seconds", min: 30, max: 90, defaultSeconds: 60 },
+  GENERAL_FITNESS: { label: "60-120 seconds", min: 60, max: 120, defaultSeconds: 90 },
+};
+
 function labelize(value: string) {
   return value.toLowerCase().replace(/_/g, " ").replace(/(^|\s)\S/g, (s) => s.toUpperCase());
 }
@@ -93,6 +100,7 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>("BEGINNER");
   const [coachingStyle, setCoachingStyle] = useState<CoachingStyle>("BALANCED");
   const [units, setUnits] = useState<Units>("LB");
+  const [preferredRestSeconds, setPreferredRestSeconds] = useState(90);
   const [splitType, setSplitType] = useState<SplitType>("PUSH_PULL_LEGS");
   const [routineName, setRoutineName] = useState("My Routine");
   const [calibrationLength, setCalibrationLength] = useState(7);
@@ -331,6 +339,7 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
           experienceLevel,
           coachingStyle,
           units,
+          preferredRestSeconds,
           splitType,
           routineName,
           days,
@@ -368,12 +377,37 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
             <button
               key={option}
               type="button"
-              onClick={() => setGoal(option)}
+              onClick={() => {
+                setGoal(option);
+                setPreferredRestSeconds(RECOMMENDED_REST_BY_GOAL[option].defaultSeconds);
+              }}
               className={`w-full rounded-xl px-3 py-3 text-left ${goal === option ? "bg-white/20" : "bg-white/8"}`}
             >
               {labelize(option)}
             </button>
           ))}
+
+          <div className="mt-3 rounded-xl border border-white/15 bg-white/5 p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-200/75">Recommended Rest Time</p>
+            <div className="mt-2 space-y-1 text-xs text-zinc-200/85">
+              <p>Strength: 3-5 minutes</p>
+              <p>Hypertrophy (Muscle Growth): 2-3 minutes</p>
+              <p>Endurance: 30-90 seconds</p>
+            </div>
+          </div>
+
+          <label className="block text-sm text-zinc-200/85">
+            Preferred rest between sets: {preferredRestSeconds}s
+            <input
+              type="range"
+              min={30}
+              max={300}
+              step={15}
+              value={preferredRestSeconds}
+              onChange={(e) => setPreferredRestSeconds(Number(e.target.value))}
+              className="glass-slider mt-2"
+            />
+          </label>
         </section>
       ) : null}
 

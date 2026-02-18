@@ -17,6 +17,7 @@ export function SettingsForm({
     units: Units;
     coachingStyle: CoachingStyle;
     goal: Goal | null;
+    preferredRestSeconds: number | null;
     calibrationLength: number;
   };
 }) {
@@ -24,6 +25,7 @@ export function SettingsForm({
   const [units, setUnits] = useState<Units>(initial.units);
   const [coachingStyle, setCoachingStyle] = useState<CoachingStyle>(initial.coachingStyle);
   const [goal, setGoal] = useState<Goal>(initial.goal ?? "GENERAL_FITNESS");
+  const [preferredRestSeconds, setPreferredRestSeconds] = useState(initial.preferredRestSeconds ?? 120);
   const [calibrationLength, setCalibrationLength] = useState(initial.calibrationLength);
   const [saving, setSaving] = useState(false);
 
@@ -32,7 +34,7 @@ export function SettingsForm({
     try {
       await jsonFetch("/api/settings", {
         method: "PATCH",
-        body: JSON.stringify({ units, coachingStyle, goal, calibrationLength }),
+        body: JSON.stringify({ units, coachingStyle, goal, preferredRestSeconds, calibrationLength }),
       });
       router.refresh();
     } finally {
@@ -74,6 +76,11 @@ export function SettingsForm({
             <option key={g} value={g}>{labelize(g)}</option>
           ))}
         </select>
+      </label>
+
+      <label className="block text-sm">
+        Preferred Rest Time: {preferredRestSeconds}s
+        <input type="range" min={30} max={300} step={15} value={preferredRestSeconds} onChange={(e) => setPreferredRestSeconds(Number(e.target.value))} className="glass-slider mt-2" />
       </label>
 
       <label className="block text-sm">

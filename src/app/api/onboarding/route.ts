@@ -29,6 +29,7 @@ const schema = z.object({
   experienceLevel: z.enum(ExperienceLevel),
   coachingStyle: z.enum(CoachingStyle),
   units: z.enum(Units),
+  preferredRestSeconds: z.number().int().min(30).max(300).default(120),
   splitType: z.enum(SplitType),
   routineName: z.string().min(2).max(50),
   days: z.array(routineDaySchema).min(1),
@@ -129,6 +130,7 @@ export async function POST(request: Request) {
         experienceLevel: data.experienceLevel,
         coachingStyle: data.coachingStyle,
         units: data.units,
+        preferredRestSeconds: data.preferredRestSeconds,
         calibrationLength: data.calibrationLength,
       },
     });

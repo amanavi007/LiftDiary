@@ -8,6 +8,7 @@ const schema = z.object({
   units: z.enum(Units).optional(),
   coachingStyle: z.enum(CoachingStyle).optional(),
   goal: z.enum(Goal).optional(),
+  preferredRestSeconds: z.number().int().min(30).max(300).optional(),
   calibrationLength: z.number().int().min(3).max(20).optional(),
 });
 
@@ -21,6 +22,7 @@ export async function GET() {
       units: true,
       coachingStyle: true,
       goal: true,
+      preferredRestSeconds: true,
       calibrationLength: true,
     },
   });
@@ -45,6 +47,7 @@ export async function PATCH(request: Request) {
       units: true,
       coachingStyle: true,
       goal: true,
+      preferredRestSeconds: true,
       calibrationLength: true,
     },
   });

@@ -98,6 +98,7 @@ export async function GET(_: Request, context: { params: Promise<{ sessionId: st
       coachingStyle: session.coachingStyleSnapshot,
       goal: session.goalSnapshot,
       units: session.unitsSnapshot,
+      preferredRestSeconds: session.user.preferredRestSeconds,
       exercises: exercisesWithRecommendations,
     },
   });

@@ -12,6 +12,7 @@ export default async function SettingsPage() {
           units: user.units,
           coachingStyle: user.coachingStyle,
           goal: user.goal,
+          preferredRestSeconds: user.preferredRestSeconds,
           calibrationLength: user.calibrationLength,
         }}
       />

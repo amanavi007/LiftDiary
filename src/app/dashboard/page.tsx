@@ -41,6 +41,8 @@ export default async function DashboardPage() {
 
   const exerciseRows = Array.from(byExercise.values()).sort((a, b) => a.name.localeCompare(b.name));
   const majorLiftNames = ["Barbell Bench Press", "Back Squat", "Deadlift", "Overhead Press", "Barbell Row"];
+  const majorRows = exerciseRows.filter((row) => majorLiftNames.includes(row.name));
+  const otherRows = exerciseRows.filter((row) => !majorLiftNames.includes(row.name));
 
   return (
     <ScreenShell>
@@ -63,13 +65,44 @@ export default async function DashboardPage() {
 
       <section className="space-y-3">
         {exerciseRows.length === 0 ? <p className="text-sm text-zinc-200/70">Log sessions to unlock PR insights.</p> : null}
-        {exerciseRows.map((row) => (
-          <article key={row.name} className="glass-card rounded-2xl p-4">
-            <p className="font-semibold">{row.name}</p>
-            <p className="text-xs text-zinc-200/70">Best weight: {row.bestWeight} • Best e1RM: {row.bestE1RM.toFixed(1)} • Volume PR: {row.bestVolume.toFixed(0)}</p>
-            <PRChart data={row.trend} />
+
+        {majorRows.length > 0 ? (
+          <article className="glass-card rounded-2xl p-4">
+            <p className="mb-2 text-sm font-semibold text-zinc-100">Major Lift Trends</p>
+            <div className="space-y-2">
+              {majorRows.map((row) => (
+                <details key={row.name} className="rounded-xl border border-white/12 bg-white/6 p-3" open>
+                  <summary className="cursor-pointer list-none">
+                    <p className="font-semibold text-white">{row.name}</p>
+                    <p className="text-xs text-zinc-200/70">Best weight: {row.bestWeight} • Best e1RM: {row.bestE1RM.toFixed(1)} • Volume PR: {row.bestVolume.toFixed(0)}</p>
+                  </summary>
+                  <div className="mt-2">
+                    <PRChart data={row.trend} />
+                  </div>
+                </details>
+              ))}
+            </div>
           </article>
-        ))}
+        ) : null}
+
+        {otherRows.length > 0 ? (
+          <article className="glass-card rounded-2xl p-4">
+            <p className="mb-2 text-sm font-semibold text-zinc-100">All Exercise Trends</p>
+            <div className="space-y-2">
+              {otherRows.map((row) => (
+                <details key={row.name} className="rounded-xl border border-white/12 bg-white/6 p-3">
+                  <summary className="cursor-pointer list-none">
+                    <p className="font-semibold text-white">{row.name}</p>
+                    <p className="text-xs text-zinc-200/70">Best weight: {row.bestWeight} • Best e1RM: {row.bestE1RM.toFixed(1)} • Volume PR: {row.bestVolume.toFixed(0)}</p>
+                  </summary>
+                  <div className="mt-2">
+                    <PRChart data={row.trend} />
+                  </div>
+                </details>
+              ))}
+            </div>
+          </article>
+        ) : null}
       </section>
     </ScreenShell>
   );
