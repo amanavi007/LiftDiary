@@ -1,0 +1,193 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Goal {
+  STRENGTH
+  HYPERTROPHY
+  ENDURANCE
+  GENERAL_FITNESS
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum CoachingStyle {
+  CONSERVATIVE
+  BALANCED
+  AGGRESSIVE
+}
+
+enum Units {
+  LB
+  KG
+}
+
+enum SplitType {
+  PUSH_PULL_LEGS
+  UPPER_LOWER
+  FULL_BODY
+  BRO_SPLIT
+  CUSTOM
+}
+
+enum MuscleGroup {
+  CHEST
+  BACK
+  SHOULDERS
+  BICEPS
+  TRICEPS
+  QUADS
+  HAMSTRINGS
+  GLUTES
+  CALVES
+  CORE
+  FULL_BODY
+  OTHER
+}
+
+enum MovementType {
+  COMPOUND
+  ISOLATION
+}
+
+model User {
+  id                                   String            @id @default(cuid())
+  email                                String            @unique
+  passwordHash                         String
+  createdAt                            DateTime          @default(now())
+  goal                                 Goal?             
+  experienceLevel                      ExperienceLevel?
+  coachingStyle                        CoachingStyle     @default(BALANCED)
+  units                                Units             @default(LB)
+  workoutsCompletedInCalibration       Int               @default(0)
+  calibrationComplete                  Boolean           @default(false)
+  calibrationLength                    Int               @default(7)
+  routines                             Routine[]
+  sessions                             WorkoutSession[]
+  recommendations                      Recommendation[]
+  customExercises                      Exercise[]        @relation("CustomExerciseOwner")
+}
+
+model Exercise {
+  id                String                @id @default(cuid())
+  name              String
+  muscleGroup       MuscleGroup
+  movementType      MovementType
+  equipment         String?
+  defaultRestSec    Int                   @default(90)
+  fatigueFactor     Float                 @default(1)
+  isCustom          Boolean               @default(false)
+  createdByUserId   String?
+  createdByUser     User?                 @relation("CustomExerciseOwner", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  routineDayEntries RoutineDayExercise[]
+  setEntries        SetEntry[]
+  recommendations   Recommendation[]
+
+  @@unique([name, createdByUserId])
+  @@index([name])
+}
+
+model Routine {
+  id        String       @id @default(cuid())
+  userId    String
+  name      String
+  splitType SplitType
+  createdAt DateTime     @default(now())
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  days      RoutineDay[]
+
+  @@index([userId])
+}
+
+model RoutineDay {
+  id        String              @id @default(cuid())
+  routineId String
+  dayIndex  Int
+  label     String
+  routine   Routine             @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  exercises RoutineDayExercise[]
+  sessions  WorkoutSession[]
+
+  @@unique([routineId, dayIndex])
+}
+
+model RoutineDayExercise {
+  id                 String     @id @default(cuid())
+  routineDayId       String
+  exerciseId         String
+  orderIndex         Int
+  targetSets         Int        @default(3)
+  targetRepRangeLow  Int
+  targetRepRangeHigh Int
+  notes              String?
+  routineDay         RoutineDay @relation(fields: [routineDayId], references: [id], onDelete: Cascade)
+  exercise           Exercise   @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@unique([routineDayId, orderIndex])
+  @@index([exerciseId])
+}
+
+model WorkoutSession {
+  id                   String         @id @default(cuid())
+  userId               String
+  routineDayId         String
+  startedAt            DateTime       @default(now())
+  endedAt              DateTime?
+  coachingStyleSnapshot CoachingStyle
+  goalSnapshot         Goal
+  unitsSnapshot        Units
+  user                 User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  routineDay           RoutineDay     @relation(fields: [routineDayId], references: [id], onDelete: Restrict)
+  sets                 SetEntry[]
+
+  @@index([userId, startedAt])
+}
+
+model SetEntry {
+  id         String         @id @default(cuid())
+  sessionId  String
+  exerciseId String
+  setIndex   Int
+  weight     Float
+  reps       Int
+  timestamp  DateTime       @default(now())
+  isFailed   Boolean        @default(false)
+  session    WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  exercise   Exercise       @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@index([exerciseId, timestamp])
+  @@index([sessionId, exerciseId])
+}
+
+model Recommendation {
+  id                 String    @id @default(cuid())
+  userId             String
+  exerciseId         String
+  recommendedWeight  Float
+  recommendedRepLow  Int
+  recommendedRepHigh Int
+  recommendedSets    Int
+  confidenceScore    Float
+  modelVersion       String
+  generatedAt        DateTime  @default(now())
+  reasonText         String
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise           Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@index([userId, exerciseId, generatedAt])
+}

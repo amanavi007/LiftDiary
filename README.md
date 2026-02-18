@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LiftDiary MVP
 
-## Getting Started
+Mobile-first workout assistant with hybrid recommendations (calibration mode + deterministic fallback + lightweight ML regression).
 
-First, run the development server:
+## Stack
+
+- Next.js App Router + TypeScript + Tailwind
+- Prisma + Postgres schema
+- Cookie session auth (JWT + bcrypt)
+- Recharts for PR trend charts
+- Vitest for core logic tests
+
+## System Architecture
+
+- **Frontend (Next.js App Router)**
+	- Mobile-first screens for onboarding, home, workout logging, history, PR dashboard, settings.
+	- Fast set logging UX with manual `Start Rest` timer and one-handed controls.
+- **API Layer (Route Handlers)**
+	- Auth routes (`/api/auth/*`), onboarding/routine, exercises, session logging, history, settings, dashboard.
+	- JSON contracts designed for low-friction client updates.
+- **Data Layer (Prisma + Postgres)**
+	- Relational entities for `User`, `Exercise`, `Routine`, `RoutineDay`, `RoutineDayExercise`, `WorkoutSession`, `SetEntry`, `Recommendation`.
+- **Recommendation Engine (Hybrid)**
+	- Calibration mode for first N workouts.
+	- Lightweight ML path: linear regression over recent performance features when sufficient data exists.
+	- Deterministic safety fallback for sparse data or low confidence.
+
+## Prisma Data Model
+
+Defined in `prisma/schema.prisma` with enums and relations for:
+
+- User profile + coaching preferences + calibration status
+- Massive exercise library + custom exercises
+- Routine split and day-exercise targets
+- Session + set-by-set logs (including `isFailed`)
+- Recommendation snapshots with confidence and reason text
+
+## Component Map
+
+- `src/components/auth-form.tsx` — signup/login form
+- `src/components/onboarding-form.tsx` — onboarding + routine builder + custom exercises
+- `src/components/start-workout-client.tsx` — day picker + session start
+- `src/components/workout-session-client.tsx` — set logger, mark-failed, rest timer
+- `src/components/pr-chart.tsx` — trend chart rendering
+- `src/components/settings-form.tsx` — units/style/goal/calibration editor
+- `src/components/mobile-nav.tsx` + `src/components/screen-shell.tsx` — mobile shell/navigation
+
+## API Routes
+
+- `POST /api/auth/signup`
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/exercises?q=...`
+- `POST /api/exercises` (custom exercise)
+- `GET /api/onboarding?splitType=...&goal=...` (split recommendations)
+- `POST /api/onboarding` (save user + routine)
+- `GET /api/routines/current`
+- `POST /api/workouts/start`
+- `GET /api/sessions/[sessionId]` (includes recommendations)
+- `PATCH /api/sessions/[sessionId]` (finish session)
+- `POST /api/sessions/[sessionId]/sets`
+- `GET /api/history?routineDayId=...`
+- `GET /api/dashboard/pr`
+- `GET/PATCH /api/settings`
+
+## Recommendation Logic (MVP)
+
+- Calibration mode until `workoutsCompletedInCalibration >= calibrationLength`.
+- Feature signals include:
+	- prior working weight
+	- achieved reps
+	- moving estimated 1RM
+	- days since last trained
+	- goal + coaching style encoding
+- Uses ML (`ml-linear-v1`) when sample count and fit quality are sufficient.
+- Fallback (`deterministic-v1`) applies progression rules + safety caps.
+
+## Exercise Seed Dataset
+
+- `prisma/seed.ts` builds a large searchable library by combining core movements with variations.
+- Includes metadata: `muscleGroup`, `movementType`, `equipment`, `defaultRestSec`, `fatigueFactor`.
+- Also seeds a demo user and baseline routine.
+
+## Setup
+
+1. Configure env in `.env`:
+
+```bash
+DATABASE_URL="postgresql://..."
+JWT_SECRET="replace-with-strong-random-secret"
+```
+
+2. Install and generate client:
+
+```bash
+npm install
+npm run db:generate
+```
+
+3. Run migrations + seed:
+
+```bash
+npm run db:migrate
+npm run db:seed
+```
+
+4. Run app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tests
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm test
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Includes core tests for recommendation behavior and PR math.

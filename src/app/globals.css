@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #050505;
+  --foreground: #f6f3f1;
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  --accent-a: #8d0000;
+  --accent-b: #ff3b00;
 }
 
 @theme inline {
@@ -12,15 +18,119 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  background:
+    radial-gradient(1200px 600px at -10% -20%, rgba(150, 0, 0, 0.25), transparent 60%),
+    radial-gradient(1000px 500px at 110% -10%, rgba(255, 85, 0, 0.18), transparent 60%),
+    linear-gradient(180deg, #0a0a0a 0%, #030303 100%);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+* {
+  box-sizing: border-box;
+}
+
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-card-strong {
+  background: var(--glass-bg-strong);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(7, 9, 18, 0.5);
+  color: #f6f8ff;
+  padding: 0.6rem 0.75rem;
+  outline: none;
+}
+
+.glass-input:focus {
+  border-color: rgba(255, 66, 0, 0.7);
+  box-shadow: 0 0 0 3px rgba(255, 66, 0, 0.18);
+}
+
+.glass-button {
+  width: 100%;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, var(--accent-a) 0%, var(--accent-b) 100%);
+  color: #f8fbff;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  box-shadow: 0 10px 24px rgba(179, 33, 0, 0.35);
+}
+
+.glass-button:disabled {
+  opacity: 0.55;
+}
+
+.glass-button-ghost {
+  width: 100%;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.04);
+  color: #dbe6ff;
+  font-weight: 600;
+  padding: 0.72rem 1rem;
+}
+
+.glass-pill {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.glass-slider {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(141, 0, 0, 0.75), rgba(255, 59, 0, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.glass-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 9999px;
+  background: #f8f2ef;
+  border: 2px solid #ff3b00;
+  box-shadow: 0 0 0 5px rgba(255, 59, 0, 0.2);
+  cursor: pointer;
+}
+
+.glass-slider::-moz-range-thumb {
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 9999px;
+  background: #f8f2ef;
+  border: 2px solid #ff3b00;
+  box-shadow: 0 0 0 5px rgba(255, 59, 0, 0.2);
+  cursor: pointer;
+}
+
+.glass-slider::-moz-range-track {
+  height: 0.55rem;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(141, 0, 0, 0.75), rgba(255, 59, 0, 0.85));
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
