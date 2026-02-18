@@ -47,6 +47,12 @@ type SetInput = {
   isFailed: boolean;
 };
 
+type SwapExercise = {
+  id: string;
+  name: string;
+  defaultRestSec: number;
+};
+
 function roundToUnit(weight: number, units: "LB" | "KG") {
   const step = units === "KG" ? 1.25 : 2.5;
   if (weight <= 0) return 0;
@@ -108,6 +114,26 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
   const [setInputs, setSetInputs] = useState<Record<string, SetInput>>({});
   const [tutorialVideoId, setTutorialVideoId] = useState<string | null>(null);
   const [loadingTutorial, setLoadingTutorial] = useState(false);
+  const [exerciseCatalog, setExerciseCatalog] = useState<SwapExercise[]>([]);
+  const [customOrderIds, setCustomOrderIds] = useState<string[]>([]);
+  const [skippedExerciseIds, setSkippedExerciseIds] = useState<string[]>([]);
+  const [swapByExerciseId, setSwapByExerciseId] = useState<Record<string, SwapExercise>>({});
+  const [swapModeForExerciseId, setSwapModeForExerciseId] = useState<string | null>(null);
+  const [swapQuery, setSwapQuery] = useState("");
+
+  useEffect(() => {
+    jsonFetch<{ exercises: Array<{ id: string; name: string; defaultRestSec?: number }> }>("/api/exercises")
+      .then((data) => {
+        setExerciseCatalog(
+          data.exercises.map((exercise) => ({
+            id: exercise.id,
+            name: exercise.name,
+            defaultRestSec: exercise.defaultRestSec ?? 90,
+          })),
+        );
+      })
+      .catch(() => setExerciseCatalog([]));
+  }, []);
 
   useEffect(() => {
     async function loadSession() {
@@ -117,6 +143,13 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         const data = await jsonFetch<SessionPayload>(`/api/sessions/${sessionId}`);
         setSession(data.session);
         setActiveExerciseId(getFirstIncompleteExerciseId(data.session.exercises));
+        setCustomOrderIds((previous) => {
+          const latestIds = data.session.exercises.map((item) => item.exercise.id);
+          if (!previous.length) return latestIds;
+          const preserved = previous.filter((id) => latestIds.includes(id));
+          const missing = latestIds.filter((id) => !preserved.includes(id));
+          return [...preserved, ...missing];
+        });
 
         const initialInputs: Record<string, SetInput> = {};
         for (const exercise of data.session.exercises) {
@@ -163,9 +196,21 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
     [session, activeExerciseId],
   );
 
+  const orderedExercises = useMemo(() => {
+    if (!session) return [];
+    const map = new Map(session.exercises.map((item) => [item.exercise.id, item]));
+    const ordered = customOrderIds.map((id) => map.get(id)).filter(Boolean) as SessionExercise[];
+    const missing = session.exercises.filter((item) => !customOrderIds.includes(item.exercise.id));
+    return [...ordered, ...missing];
+  }, [session, customOrderIds]);
+
+  const activeExerciseDisplay = activeExercise
+    ? swapByExerciseId[activeExercise.exercise.id] ?? activeExercise.exercise
+    : null;
+
   useEffect(() => {
-    if (!activeExercise) return;
-    const exerciseName = activeExercise.exercise.name;
+    if (!activeExerciseDisplay) return;
+    const exerciseName = activeExerciseDisplay.name;
 
     let cancelled = false;
 
@@ -197,7 +242,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
     return () => {
       cancelled = true;
     };
-  }, [activeExercise]);
+  }, [activeExerciseDisplay]);
 
   const totalTargetSets = useMemo(() => {
     if (!session) return 0;
@@ -211,9 +256,15 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
 
   const progressPercent = totalTargetSets ? Math.min(100, Math.round((loggedSetCount / totalTargetSets) * 100)) : 0;
   const activeSetNumber = activeExercise ? Math.min(activeExercise.loggedSets.length + 1, activeExercise.targetSets) : 1;
-  const allExercisesComplete = !!session?.exercises.every((item) => item.loggedSets.length >= item.targetSets);
+  const allExercisesComplete =
+    !!session?.exercises.every(
+      (item) => item.loggedSets.length >= item.targetSets || skippedExerciseIds.includes(item.exercise.id),
+    );
   const isResting = !!activeExercise && activeRestExercise === activeExercise.exercise.id && restSecondsLeft > 0;
-  const completedExercisesCount = session?.exercises.filter((item) => item.loggedSets.length >= item.targetSets).length ?? 0;
+  const completedExercisesCount =
+    session?.exercises.filter(
+      (item) => item.loggedSets.length >= item.targetSets || skippedExerciseIds.includes(item.exercise.id),
+    ).length ?? 0;
   const restProgress = restDurationSeconds > 0
     ? Math.min(100, Math.round(((restDurationSeconds - restSecondsLeft) / restDurationSeconds) * 100))
     : 0;
@@ -248,7 +299,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
       await jsonFetch(`/api/sessions/${sessionId}/sets`, {
         method: "POST",
         body: JSON.stringify({
-          exerciseId,
+          exerciseId: activeExerciseDisplay?.id ?? exerciseId,
           setIndex: nextSetIndex,
           weight: values.weight,
           reps: values.reps,
@@ -270,7 +321,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         },
       }));
 
-      const rest = updatedSession.preferredRestSeconds ?? (updatedExercise.exercise.defaultRestSec || 90);
+      const rest = updatedSession.preferredRestSeconds ?? (activeExerciseDisplay?.defaultRestSec || updatedExercise.exercise.defaultRestSec || 90);
       setActiveRestExercise(exerciseId);
       setRestDurationSeconds(rest);
       setRestSecondsLeft(rest);
@@ -313,6 +364,40 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
 
   const confidencePercent = Math.round(activeExercise.recommendation.confidenceScore * 100);
   const canLogSet = activeExercise.loggedSets.length < activeExercise.targetSets;
+  const swapResults = swapQuery.trim()
+    ? exerciseCatalog
+        .filter((exercise) => exercise.name.toLowerCase().includes(swapQuery.trim().toLowerCase()))
+        .slice(0, 8)
+    : [];
+
+  function moveExercise(exerciseId: string, direction: "up" | "down") {
+    setCustomOrderIds((previous) => {
+      const next = previous.length ? [...previous] : orderedExercises.map((item) => item.exercise.id);
+      const index = next.indexOf(exerciseId);
+      if (index < 0) return next;
+      const targetIndex = direction === "up" ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= next.length) return next;
+      [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+      return next;
+    });
+  }
+
+  function skipExercise(exerciseId: string) {
+    setSkippedExerciseIds((previous) => (previous.includes(exerciseId) ? previous : [...previous, exerciseId]));
+
+    if (!activeExercise) return;
+    if (exerciseId !== activeExercise.exercise.id) return;
+
+    const next = orderedExercises.find(
+      (item) =>
+        item.exercise.id !== exerciseId &&
+        item.loggedSets.length < item.targetSets &&
+        !skippedExerciseIds.includes(item.exercise.id),
+    );
+    if (next) {
+      setActiveExerciseId(next.exercise.id);
+    }
+  }
 
   return (
     <div className="space-y-2 pb-4">
@@ -337,7 +422,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
 
       <section className="glass-card rounded-2xl p-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-lg font-semibold text-white">{activeExercise.exercise.name}</p>
+          <p className="text-lg font-semibold text-white">{activeExerciseDisplay?.name ?? activeExercise.exercise.name}</p>
           <span className="glass-pill px-2 py-1 text-xs text-zinc-100">Set {activeSetNumber}/{activeExercise.targetSets}</span>
         </div>
 
@@ -354,7 +439,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           ) : tutorialVideoId ? (
             <div className="overflow-hidden rounded-lg border border-white/15">
               <iframe
-                title={`${activeExercise.exercise.name} tutorial`}
+                title={`${activeExerciseDisplay?.name ?? activeExercise.exercise.name} tutorial`}
                 src={`https://www.youtube.com/embed/${tutorialVideoId}?rel=0&modestbranding=1&playsinline=1`}
                 className="h-36 w-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -369,7 +454,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           )}
           {!tutorialVideoId ? (
             <a
-              href={tutorialSearchUrl(activeExercise.exercise.name)}
+              href={tutorialSearchUrl(activeExerciseDisplay?.name ?? activeExercise.exercise.name)}
               target="_blank"
               rel="noreferrer"
               className="mt-2 inline-block text-xs text-zinc-300 underline"
@@ -465,25 +550,72 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         </summary>
 
         <div className="mt-3 space-y-2">
-          {session.exercises.map((item) => {
-            const done = item.loggedSets.length >= item.targetSets;
+          {orderedExercises.map((item, index) => {
+            const done = item.loggedSets.length >= item.targetSets || skippedExerciseIds.includes(item.exercise.id);
             const active = item.exercise.id === activeExercise.exercise.id;
+            const displayExercise = swapByExerciseId[item.exercise.id] ?? item.exercise;
             return (
-              <button
-                key={item.exercise.id}
-                type="button"
-                onClick={() => setActiveExerciseId(item.exercise.id)}
-                className={`w-full rounded-xl px-3 py-2 text-left text-sm transition ${
-                  active ? "bg-white/18 text-white" : "bg-white/6 text-zinc-200/90"
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span>{item.exercise.name}</span>
-                  <span className={`text-xs ${done ? "text-emerald-300" : "text-zinc-300/75"}`}>
-                    {item.loggedSets.length}/{item.targetSets}
-                  </span>
+              <div key={item.exercise.id} className={`w-full rounded-xl px-3 py-2 text-left text-sm transition ${
+                active ? "bg-white/18 text-white" : "bg-white/6 text-zinc-200/90"
+              }`}>
+                <button type="button" onClick={() => setActiveExerciseId(item.exercise.id)} className="w-full text-left">
+                  <div className="flex items-center justify-between">
+                    <span>{displayExercise.name}</span>
+                    <span className={`text-xs ${done ? "text-emerald-300" : "text-zinc-300/75"}`}>
+                      {item.loggedSets.length}/{item.targetSets}
+                    </span>
+                  </div>
+                </button>
+
+                <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
+                  <button type="button" onClick={() => moveExercise(item.exercise.id, "up")} disabled={index === 0} className="glass-pill px-2 py-1 disabled:opacity-40">↑ Up</button>
+                  <button type="button" onClick={() => moveExercise(item.exercise.id, "down")} disabled={index === orderedExercises.length - 1} className="glass-pill px-2 py-1 disabled:opacity-40">↓ Down</button>
+                  <button type="button" onClick={() => skipExercise(item.exercise.id)} disabled={done} className="glass-pill px-2 py-1 disabled:opacity-40">Skip</button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSwapModeForExerciseId(item.exercise.id);
+                      setSwapQuery("");
+                    }}
+                    className="glass-pill px-2 py-1"
+                  >
+                    Swap
+                  </button>
                 </div>
-              </button>
+
+                {swapModeForExerciseId === item.exercise.id ? (
+                  <div className="mt-2 space-y-2">
+                    <input
+                      value={swapQuery}
+                      onChange={(event) => setSwapQuery(event.target.value)}
+                      placeholder="Search replacement exercise"
+                      className="glass-input px-2 py-1 text-xs"
+                    />
+                    <div className="max-h-36 overflow-y-auto space-y-1">
+                      {swapResults.map((exercise) => (
+                        <button
+                          key={exercise.id}
+                          type="button"
+                          onClick={() => {
+                            setSwapByExerciseId((previous) => ({
+                              ...previous,
+                              [item.exercise.id]: exercise,
+                            }));
+                            setSwapModeForExerciseId(null);
+                            setSwapQuery("");
+                          }}
+                          className="block w-full rounded-md border border-white/10 bg-black/30 px-2 py-1 text-left text-xs text-zinc-200 hover:bg-white/10"
+                        >
+                          {exercise.name}
+                        </button>
+                      ))}
+                      {swapQuery.trim().length > 0 && swapResults.length === 0 ? (
+                        <p className="text-xs text-zinc-300/70">No matching exercises.</p>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
             );
           })}
         </div>
@@ -499,7 +631,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-5 backdrop-blur-md">
           <div className="glass-card-strong w-full max-w-md rounded-3xl p-6 text-center">
             <p className="text-xs uppercase tracking-[0.22em] text-orange-200/80">Rest Timer</p>
-            <h2 className="mt-2 text-xl font-semibold text-white">{activeExercise.exercise.name}</h2>
+            <h2 className="mt-2 text-xl font-semibold text-white">{activeExerciseDisplay?.name ?? activeExercise.exercise.name}</h2>
 
             <div className="mt-6 overflow-hidden rounded-full border border-white/20 bg-white/8">
               <div

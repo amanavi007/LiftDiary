@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { HomeTodayPlanClient } from "@/components/home-today-plan-client";
 import { ScreenShell } from "@/components/screen-shell";
 import { isOnboardingComplete, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -36,6 +37,13 @@ export default async function HomePage() {
     return routine.days[nextIndex]?.label ?? routine.days[0].label;
   })();
 
+  const nextDayId = (() => {
+    if (!routine?.days?.length) return "";
+    if (!lastSession) return routine.days[0].id;
+    const nextIndex = (lastSession.routineDay.dayIndex + 1) % routine.days.length;
+    return routine.days[nextIndex]?.id ?? routine.days[0].id;
+  })();
+
   const streak = await prisma.workoutSession.count({
     where: {
       userId: user.id,
@@ -63,18 +71,19 @@ export default async function HomePage() {
         <h1 className="text-3xl font-bold text-white">Train hard today</h1>
       </header>
 
-      <section className="glass-card-strong mb-4 rounded-2xl p-4">
-        <p className="text-xs uppercase tracking-[0.14em] text-zinc-300/70">Today&apos;s Focus</p>
-        <p className="mt-1 text-2xl font-bold text-white">{nextDay}</p>
-        <p className="text-sm text-zinc-200/80">Show up, log clean sets, and push progression.</p>
-
-        <Link
-          href="/workout/start"
-          className="glass-button mt-4 block py-4 text-center text-lg"
-        >
-          START WORKOUT
-        </Link>
-      </section>
+      <HomeTodayPlanClient
+        defaultDayId={nextDayId}
+        dayPlans={(routine?.days ?? []).map((day) => ({
+          id: day.id,
+          label: day.label,
+          exercises: day.exercises.map((exercise) => ({
+            name: exercise.exercise.name,
+            targetSets: exercise.targetSets,
+            targetRepRangeLow: exercise.targetRepRangeLow,
+            targetRepRangeHigh: exercise.targetRepRangeHigh,
+          })),
+        }))}
+      />
 
       <section className="mb-4 grid grid-cols-2 gap-3">
         <div className="glass-card rounded-xl px-3 py-3">
