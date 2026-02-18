@@ -41,6 +41,15 @@ export async function GET(request: Request) {
 
   const where = q
     ? {
+        AND: [
+          {
+            name: {
+              not: {
+                startsWith: "1.5 Rep ",
+              },
+            },
+          },
+        ],
         OR: [
           {
             name: {
@@ -67,7 +76,13 @@ export async function GET(request: Request) {
             : []),
         ],
       }
-    : {};
+    : {
+        name: {
+          not: {
+            startsWith: "1.5 Rep ",
+          },
+        },
+      };
 
   const fetched = await prisma.exercise.findMany({
     where,

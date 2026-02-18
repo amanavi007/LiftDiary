@@ -149,7 +149,6 @@ const COMPOUND_PREFIXES = [
   "Deficit",
   "Power",
   "Cluster",
-  "1.5 Rep",
 ];
 
 const ISOLATION_PREFIXES = [

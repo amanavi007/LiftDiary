@@ -33,6 +33,7 @@ const schema = z.object({
   routineName: z.string().min(2).max(50),
   days: z.array(routineDaySchema).min(1),
   calibrationLength: z.number().int().min(3).max(20).default(7),
+  replaceExisting: z.boolean().default(true),
 });
 
 function inferMuscleGroups(dayLabel: string): MuscleGroup[] {
@@ -73,6 +74,11 @@ export async function GET(request: Request) {
 
       const recommendedExercises = await prisma.exercise.findMany({
         where: {
+          name: {
+            not: {
+              startsWith: "1.5 Rep ",
+            },
+          },
           muscleGroup: {
             in: groups,
           },
@@ -127,8 +133,7 @@ export async function POST(request: Request) {
       },
     });
 
-    const existingRoutines = await tx.routine.findMany({ where: { userId: auth }, select: { id: true } });
-    if (existingRoutines.length) {
+    if (data.replaceExisting) {
       await tx.routine.deleteMany({ where: { userId: auth } });
     }
 
