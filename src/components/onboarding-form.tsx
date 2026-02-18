@@ -2,7 +2,7 @@
 
 import { CoachingStyle, ExperienceLevel, Goal, SplitType, Units } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { jsonFetch } from "@/lib/client";
 
 type Exercise = {
@@ -324,7 +324,7 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
     addExercise(data.exercise);
   }
 
-  async function handleScreenshotUpload(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleScreenshotUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 

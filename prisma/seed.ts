@@ -127,6 +127,218 @@ const CURATED_EXERCISES: SeedExercise[] = [
   { name: "Thruster", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell/Dumbbell", defaultRestSec: 140, fatigueFactor: 1.2 },
   { name: "Farmer Carry", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Dumbbell/Trap Bar", defaultRestSec: 90, fatigueFactor: 1.0 },
   { name: "Kettlebell Swing", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Kettlebell", defaultRestSec: 80, fatigueFactor: 0.95 },
+
+  // Additional Chest Exercises
+  { name: "Dumbbell Pullover", muscleGroup: "CHEST", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "Close-Grip Bench Press", muscleGroup: "CHEST", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 120, fatigueFactor: 1.1 },
+  { name: "Decline Dumbbell Press", muscleGroup: "CHEST", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 110, fatigueFactor: 1.05 },
+  { name: "Landmine Press", muscleGroup: "CHEST", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Svend Press", muscleGroup: "CHEST", movementType: "ISOLATION", equipment: "Plate", defaultRestSec: 60, fatigueFactor: 0.75 },
+  { name: "Plate Press Out", muscleGroup: "CHEST", movementType: "ISOLATION", equipment: "Plate", defaultRestSec: 60, fatigueFactor: 0.75 },
+  { name: "Dumbbell Squeeze Press", muscleGroup: "CHEST", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Floor Press", muscleGroup: "CHEST", movementType: "COMPOUND", equipment: "Barbell/Dumbbell", defaultRestSec: 110, fatigueFactor: 1.05 },
+  { name: "Deficit Push-Up", muscleGroup: "CHEST", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 70, fatigueFactor: 0.9 },
+  { name: "Diamond Push-Up", muscleGroup: "CHEST", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 65, fatigueFactor: 0.85 },
+  { name: "Archer Push-Up", muscleGroup: "CHEST", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 70, fatigueFactor: 0.9 },
+  { name: "Cable Crossover", muscleGroup: "CHEST", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 65, fatigueFactor: 0.8 },
+  { name: "Single-Arm Cable Press", muscleGroup: "CHEST", movementType: "COMPOUND", equipment: "Cable", defaultRestSec: 90, fatigueFactor: 0.95 },
+
+  // Additional Back Exercises
+  { name: "Pendlay Row", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 130, fatigueFactor: 1.15 },
+  { name: "Yates Row", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 130, fatigueFactor: 1.15 },
+  { name: "Meadows Row", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Kroc Row", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 80, fatigueFactor: 0.95 },
+  { name: "Seal Row", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 110, fatigueFactor: 1.05 },
+  { name: "Inverted Row", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 75, fatigueFactor: 0.9 },
+  { name: "Wide-Grip Pull-Up", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 120, fatigueFactor: 1.2 },
+  { name: "Close-Grip Pull-Up", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 120, fatigueFactor: 1.2 },
+  { name: "Chin-Up", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 110, fatigueFactor: 1.15 },
+  { name: "Weighted Pull-Up", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 140, fatigueFactor: 1.25 },
+  { name: "Weighted Chin-Up", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 130, fatigueFactor: 1.2 },
+  { name: "Neutral-Grip Pull-Up", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 115, fatigueFactor: 1.15 },
+  { name: "Assisted Pull-Up", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Machine", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "Machine Row", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Machine", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Hammer Strength Row", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Machine", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Single-Arm Cable Row", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Cable", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "V-Bar Pulldown", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Cable", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Wide-Grip Lat Pulldown", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Cable", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Underhand Lat Pulldown", muscleGroup: "BACK", movementType: "COMPOUND", equipment: "Cable", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Cable Pullover", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 65, fatigueFactor: 0.8 },
+  { name: "Dumbbell Pullover", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "Machine Pullover", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 65, fatigueFactor: 0.8 },
+  { name: "Hyperextension", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 60, fatigueFactor: 0.75 },
+  { name: "Reverse Hyperextension", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 60, fatigueFactor: 0.75 },
+  { name: "Back Extension", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 60, fatigueFactor: 0.75 },
+  { name: "Shrug", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Barbell/Dumbbell", defaultRestSec: 70, fatigueFactor: 0.8 },
+  { name: "Dumbbell Shrug", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 70, fatigueFactor: 0.8 },
+  { name: "Barbell Shrug", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Barbell", defaultRestSec: 75, fatigueFactor: 0.85 },
+  { name: "Trap Bar Shrug", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Trap Bar", defaultRestSec: 80, fatigueFactor: 0.9 },
+
+  // Additional Shoulder Exercises
+  { name: "Dumbbell Shoulder Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Standing Barbell Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 130, fatigueFactor: 1.15 },
+  { name: "Seated Barbell Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 120, fatigueFactor: 1.1 },
+  { name: "Behind-the-Neck Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 110, fatigueFactor: 1.05 },
+  { name: "Push Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 130, fatigueFactor: 1.2 },
+  { name: "Viking Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 110, fatigueFactor: 1.05 },
+  { name: "Landmine Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Single-Arm Landmine Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "Cable Shoulder Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Cable", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "Dumbbell Lateral Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Machine Lateral Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Leaning Lateral Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Dumbbell Front Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Plate Front Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Plate", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Cable Front Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Bent-Over Lateral Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Cable Rear Delt Fly", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Banded Lateral Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Band", defaultRestSec: 50, fatigueFactor: 0.7 },
+  { name: "Lu Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Dumbbell/Plate", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Y-Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 50, fatigueFactor: 0.7 },
+  { name: "W-Raise", muscleGroup: "SHOULDERS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 50, fatigueFactor: 0.7 },
+  { name: "Bradford Press", muscleGroup: "SHOULDERS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 100, fatigueFactor: 1.0 },
+
+  // Additional Biceps Exercises
+  { name: "EZ Bar Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "EZ Bar", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Dumbbell Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Alternating Dumbbell Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Zottman Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Reverse Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Barbell/EZ Bar", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Drag Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Barbell", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "21s Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Barbell", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "Bayesian Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "High Cable Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Rope Cable Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Cross-Body Hammer Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Waiter Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Machine Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Seated Dumbbell Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Standing Cable Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Chin-Up (Bicep Focus)", muscleGroup: "BICEPS", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 100, fatigueFactor: 1.1 },
+
+  // Additional Triceps Exercises
+  { name: "Close-Grip Push-Up", muscleGroup: "TRICEPS", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 60, fatigueFactor: 0.85 },
+  { name: "JM Press", muscleGroup: "TRICEPS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "California Press", muscleGroup: "TRICEPS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "Lying Triceps Extension", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "EZ Bar", defaultRestSec: 70, fatigueFactor: 0.9 },
+  { name: "Dumbbell Triceps Extension", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 65, fatigueFactor: 0.85 },
+  { name: "Seated Overhead Extension", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 65, fatigueFactor: 0.85 },
+  { name: "French Press", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "EZ Bar", defaultRestSec: 70, fatigueFactor: 0.9 },
+  { name: "Tate Press", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Diamond Push-Up", muscleGroup: "TRICEPS", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 65, fatigueFactor: 0.85 },
+  { name: "Tricep Dumbbell Kickback", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "Dumbbell", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Cable Tricep Kickback", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "V-Bar Pushdown", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Straight Bar Pushdown", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "EZ Bar Pushdown", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Single-Arm Overhead Extension", muscleGroup: "TRICEPS", movementType: "ISOLATION", equipment: "Cable/Dumbbell", defaultRestSec: 60, fatigueFactor: 0.8 },
+
+  // Forearm Exercises
+  { name: "Wrist Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Barbell/Dumbbell", defaultRestSec: 50, fatigueFactor: 0.6 },
+  { name: "Reverse Wrist Curl", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Barbell/Dumbbell", defaultRestSec: 50, fatigueFactor: 0.6 },
+  { name: "Farmer Walk", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 80, fatigueFactor: 0.9 },
+  { name: "Plate Pinch", muscleGroup: "BICEPS", movementType: "ISOLATION", equipment: "Plate", defaultRestSec: 45, fatigueFactor: 0.6 },
+  { name: "Dead Hang", muscleGroup: "BACK", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 45, fatigueFactor: 0.6 },
+
+  // Additional Quad Exercises
+  { name: "Sissy Squat", muscleGroup: "QUADS", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "Zercher Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 140, fatigueFactor: 1.15 },
+  { name: "Box Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 170, fatigueFactor: 1.25 },
+  { name: "Pause Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 180, fatigueFactor: 1.3 },
+  { name: "Safety Bar Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 160, fatigueFactor: 1.2 },
+  { name: "Anderson Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 170, fatigueFactor: 1.25 },
+  { name: "Split Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Dumbbell/Barbell", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "Reverse Lunge", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Dumbbell/Barbell", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "Forward Lunge", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Dumbbell/Barbell", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "Lateral Lunge", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 85, fatigueFactor: 0.9 },
+  { name: "Curtsy Lunge", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 85, fatigueFactor: 0.9 },
+  { name: "Smith Machine Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Smith Machine", defaultRestSec: 140, fatigueFactor: 1.1 },
+  { name: "Landmine Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 110, fatigueFactor: 1.0 },
+  { name: "Belt Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Machine", defaultRestSec: 120, fatigueFactor: 1.05 },
+  { name: "V-Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Machine", defaultRestSec: 110, fatigueFactor: 1.0 },
+  { name: "Cyclist Squat", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 120, fatigueFactor: 1.05 },
+  { name: "Single-Leg Press", muscleGroup: "QUADS", movementType: "COMPOUND", equipment: "Machine", defaultRestSec: 100, fatigueFactor: 0.95 },
+  { name: "Single-Leg Extension", muscleGroup: "QUADS", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "Spanish Squat", muscleGroup: "QUADS", movementType: "ISOLATION", equipment: "Band", defaultRestSec: 70, fatigueFactor: 0.8 },
+
+  // Additional Hamstring Exercises
+  { name: "Lying Leg Curl", muscleGroup: "HAMSTRINGS", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "Standing Leg Curl", muscleGroup: "HAMSTRINGS", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 65, fatigueFactor: 0.8 },
+  { name: "Glute-Ham Raise", muscleGroup: "HAMSTRINGS", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 100, fatigueFactor: 1.1 },
+  { name: "Swiss Ball Leg Curl", muscleGroup: "HAMSTRINGS", movementType: "ISOLATION", equipment: "Swiss Ball", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "Slider Leg Curl", muscleGroup: "HAMSTRINGS", movementType: "ISOLATION", equipment: "Slider", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "Cable Pull-Through", muscleGroup: "HAMSTRINGS", movementType: "COMPOUND", equipment: "Cable", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "Single-Leg Romanian Deadlift", muscleGroup: "HAMSTRINGS", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "B-Stance Romanian Deadlift", muscleGroup: "HAMSTRINGS", movementType: "COMPOUND", equipment: "Barbell/Dumbbell", defaultRestSec: 110, fatigueFactor: 1.05 },
+  { name: "Deficit Romanian Deadlift", muscleGroup: "HAMSTRINGS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 140, fatigueFactor: 1.15 },
+  { name: "Snatch-Grip Deadlift", muscleGroup: "HAMSTRINGS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 170, fatigueFactor: 1.3 },
+  { name: "Trap Bar Deadlift", muscleGroup: "HAMSTRINGS", movementType: "COMPOUND", equipment: "Trap Bar", defaultRestSec: 160, fatigueFactor: 1.25 },
+  { name: "Sumo Deadlift", muscleGroup: "HAMSTRINGS", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 180, fatigueFactor: 1.35 },
+
+  // Additional Glute Exercises
+  { name: "Single-Leg Hip Thrust", muscleGroup: "GLUTES", movementType: "COMPOUND", equipment: "Barbell/Bodyweight", defaultRestSec: 100, fatigueFactor: 1.0 },
+  { name: "B-Stance Hip Thrust", muscleGroup: "GLUTES", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 110, fatigueFactor: 1.05 },
+  { name: "Frog Pump", muscleGroup: "GLUTES", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 50, fatigueFactor: 0.65 },
+  { name: "Fire Hydrant", muscleGroup: "GLUTES", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 45, fatigueFactor: 0.6 },
+  { name: "Glute Kickback Machine", muscleGroup: "GLUTES", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 55, fatigueFactor: 0.7 },
+  { name: "Smith Machine Hip Thrust", muscleGroup: "GLUTES", movementType: "COMPOUND", equipment: "Smith Machine", defaultRestSec: 110, fatigueFactor: 1.05 },
+  { name: "Cable Pull-Through", muscleGroup: "GLUTES", movementType: "COMPOUND", equipment: "Cable", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "Reverse Hyperextension", muscleGroup: "GLUTES", movementType: "COMPOUND", equipment: "Machine", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "45-Degree Hyperextension", muscleGroup: "GLUTES", movementType: "COMPOUND", equipment: "Machine", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "Step-Down", muscleGroup: "GLUTES", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 70, fatigueFactor: 0.85 },
+  { name: "Single-Leg Glute Bridge", muscleGroup: "GLUTES", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 60, fatigueFactor: 0.75 },
+  { name: "Banded Glute Bridge", muscleGroup: "GLUTES", movementType: "ISOLATION", equipment: "Band", defaultRestSec: 60, fatigueFactor: 0.75 },
+  { name: "Clamshell", muscleGroup: "GLUTES", movementType: "ISOLATION", equipment: "Band", defaultRestSec: 40, fatigueFactor: 0.55 },
+  { name: "Monster Walk", muscleGroup: "GLUTES", movementType: "ISOLATION", equipment: "Band", defaultRestSec: 50, fatigueFactor: 0.65 },
+
+  // Additional Core Exercises
+  { name: "L-Sit", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 50, fatigueFactor: 0.7 },
+  { name: "Toes-To-Bar", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Knees-To-Elbows", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 55, fatigueFactor: 0.75 },
+  { name: "V-Up", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 45, fatigueFactor: 0.6 },
+  { name: "Bicycle Crunch", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 40, fatigueFactor: 0.55 },
+  { name: "Reverse Crunch", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 40, fatigueFactor: 0.55 },
+  { name: "Mountain Climber", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 40, fatigueFactor: 0.6 },
+  { name: "Dead Bug", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 40, fatigueFactor: 0.5 },
+  { name: "Bird Dog", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 40, fatigueFactor: 0.5 },
+  { name: "Pallof Press", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 50, fatigueFactor: 0.65 },
+  { name: "Woodchopper", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Cable", defaultRestSec: 50, fatigueFactor: 0.65 },
+  { name: "Landmine Twist", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Barbell", defaultRestSec: 55, fatigueFactor: 0.7 },
+  { name: "Weighted Crunch", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Plate", defaultRestSec: 45, fatigueFactor: 0.6 },
+  { name: "Sit-Up", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 40, fatigueFactor: 0.55 },
+  { name: "Weighted Sit-Up", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Plate", defaultRestSec: 45, fatigueFactor: 0.6 },
+  { name: "GHD Sit-Up", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Machine", defaultRestSec: 55, fatigueFactor: 0.7 },
+  { name: "Dragon Flag", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 70, fatigueFactor: 0.9 },
+  { name: "Hollow Hold", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 40, fatigueFactor: 0.5 },
+  { name: "Flutter Kick", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 40, fatigueFactor: 0.55 },
+  { name: "Scissor Kick", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 40, fatigueFactor: 0.55 },
+  { name: "Windshield Wiper", muscleGroup: "CORE", movementType: "ISOLATION", equipment: "Bodyweight", defaultRestSec: 60, fatigueFactor: 0.75 },
+
+  // Olympic Lifts & Variations
+  { name: "Snatch", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 180, fatigueFactor: 1.4 },
+  { name: "Hang Snatch", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 170, fatigueFactor: 1.35 },
+  { name: "Power Snatch", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 170, fatigueFactor: 1.35 },
+  { name: "Hang Clean", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 160, fatigueFactor: 1.3 },
+  { name: "Clean", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 170, fatigueFactor: 1.35 },
+  { name: "Jerk", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 150, fatigueFactor: 1.25 },
+  { name: "Split Jerk", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 150, fatigueFactor: 1.25 },
+  { name: "Push Jerk", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 140, fatigueFactor: 1.2 },
+  { name: "Muscle Snatch", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 150, fatigueFactor: 1.25 },
+  { name: "Muscle Clean", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Barbell", defaultRestSec: 150, fatigueFactor: 1.25 },
+
+  // Additional Full Body & Functional
+  { name: "Turkish Get-Up", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Kettlebell", defaultRestSec: 100, fatigueFactor: 1.1 },
+  { name: "Battle Rope Waves", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Battle Rope", defaultRestSec: 60, fatigueFactor: 0.85 },
+  { name: "Sled Push", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Sled", defaultRestSec: 120, fatigueFactor: 1.15 },
+  { name: "Sled Pull", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Sled", defaultRestSec: 120, fatigueFactor: 1.15 },
+  { name: "Prowler Push", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Prowler", defaultRestSec: 120, fatigueFactor: 1.15 },
+  { name: "Box Jump", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 90, fatigueFactor: 0.95 },
+  { name: "Broad Jump", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 80, fatigueFactor: 0.9 },
+  { name: "Medicine Ball Slam", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Medicine Ball", defaultRestSec: 60, fatigueFactor: 0.8 },
+  { name: "Wall Ball", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Medicine Ball", defaultRestSec: 75, fatigueFactor: 0.9 },
+  { name: "Burpee", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Bodyweight", defaultRestSec: 60, fatigueFactor: 0.85 },
+  { name: "Devil Press", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 90, fatigueFactor: 1.05 },
+  { name: "Man Maker", muscleGroup: "FULL_BODY", movementType: "COMPOUND", equipment: "Dumbbell", defaultRestSec: 100, fatigueFactor: 1.1 },
 ];
 
 const VARIATIONS = [
@@ -296,44 +508,27 @@ async function seedExercises() {
     where: { createdByUserId: null },
     select: { id: true, name: true },
   });
-  const canonicalByName = new Map(canonical.map((item) => [item.name.toLowerCase(), item.id] as const));
+  const canonicalNames = new Set(canonical.map((item) => item.name.toLowerCase()));
 
-  for (const ex of exercises) {
-    const key = ex.name.toLowerCase();
-    const existingId = canonicalByName.get(key);
+  const missingExercises = exercises
+    .filter((ex) => !canonicalNames.has(ex.name.toLowerCase()))
+    .map((ex) => ({
+      ...ex,
+      isCustom: false,
+      createdByUserId: null,
+    }));
 
-    if (existingId) {
-      await prisma.exercise.update({
-        where: { id: existingId },
-        data: {
-          muscleGroup: ex.muscleGroup,
-          movementType: ex.movementType,
-          equipment: ex.equipment,
-          defaultRestSec: ex.defaultRestSec,
-          fatigueFactor: ex.fatigueFactor,
-          isCustom: false,
-          createdByUserId: null,
-        },
-      });
-      continue;
-    }
-
-    const created = await prisma.exercise.create({
-      data: {
-        ...ex,
-        isCustom: false,
-      },
-      select: { id: true },
+  if (missingExercises.length > 0) {
+    await prisma.exercise.createMany({
+      data: missingExercises,
     });
-
-    canonicalByName.set(key, created.id);
   }
 
   const systemExerciseCount = await prisma.exercise.count({
     where: { createdByUserId: null },
   });
 
-  console.log(`✅ Exercises seeded successfully (${systemExerciseCount} total system exercises)`);
+  console.log(`✅ Exercises seeded successfully (${systemExerciseCount} total system exercises, +${missingExercises.length} new)`);
 }
 
 async function seedDemoUser() {
