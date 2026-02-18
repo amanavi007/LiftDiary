@@ -5,6 +5,7 @@ import {
   PrismaClient,
   SplitType,
 } from "@prisma/client";
+import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
@@ -256,23 +257,83 @@ async function seedExercises() {
   console.log('🌱 Starting exercise seed...');
   const exercises = generateLargeLibrary();
   console.log(`📊 Generated ${exercises.length} exercises to seed`);
-  
-  // Clear all existing system exercises
-  await prisma.exercise.deleteMany({
-    where: { createdByUserId: null }
+
+  const existingSystem = await prisma.exercise.findMany({
+    where: { createdByUserId: null },
+    select: { id: true, name: true },
+    orderBy: { id: "asc" },
   });
-  console.log('🗑️  Cleared existing system exercises');
-  
-  // Batch insert all exercises
-  await prisma.exercise.createMany({
-    data: exercises.map(ex => ({
-      ...ex,
-      isCustom: false,
-    })),
-    skipDuplicates: true,
+
+  const primaryByName = new Map<string, string>();
+  const duplicateIds: string[] = [];
+
+  for (const item of existingSystem) {
+    const key = item.name.toLowerCase();
+    if (!primaryByName.has(key)) {
+      primaryByName.set(key, item.id);
+      continue;
+    }
+    duplicateIds.push(item.id);
+  }
+
+  for (const duplicateId of duplicateIds) {
+    const duplicate = existingSystem.find((item) => item.id === duplicateId);
+    if (!duplicate) continue;
+
+    const targetId = primaryByName.get(duplicate.name.toLowerCase());
+    if (!targetId || targetId === duplicateId) continue;
+
+    await prisma.$transaction([
+      prisma.routineDayExercise.updateMany({ where: { exerciseId: duplicateId }, data: { exerciseId: targetId } }),
+      prisma.setEntry.updateMany({ where: { exerciseId: duplicateId }, data: { exerciseId: targetId } }),
+      prisma.recommendation.updateMany({ where: { exerciseId: duplicateId }, data: { exerciseId: targetId } }),
+    ]);
+
+    await prisma.exercise.delete({ where: { id: duplicateId } });
+  }
+
+  const canonical = await prisma.exercise.findMany({
+    where: { createdByUserId: null },
+    select: { id: true, name: true },
   });
-  
-  console.log('✅ Exercises seeded successfully');
+  const canonicalByName = new Map(canonical.map((item) => [item.name.toLowerCase(), item.id] as const));
+
+  for (const ex of exercises) {
+    const key = ex.name.toLowerCase();
+    const existingId = canonicalByName.get(key);
+
+    if (existingId) {
+      await prisma.exercise.update({
+        where: { id: existingId },
+        data: {
+          muscleGroup: ex.muscleGroup,
+          movementType: ex.movementType,
+          equipment: ex.equipment,
+          defaultRestSec: ex.defaultRestSec,
+          fatigueFactor: ex.fatigueFactor,
+          isCustom: false,
+          createdByUserId: null,
+        },
+      });
+      continue;
+    }
+
+    const created = await prisma.exercise.create({
+      data: {
+        ...ex,
+        isCustom: false,
+      },
+      select: { id: true },
+    });
+
+    canonicalByName.set(key, created.id);
+  }
+
+  const systemExerciseCount = await prisma.exercise.count({
+    where: { createdByUserId: null },
+  });
+
+  console.log(`✅ Exercises seeded successfully (${systemExerciseCount} total system exercises)`);
 }
 
 async function seedDemoUser() {
@@ -317,9 +378,197 @@ async function seedDemoUser() {
   }
 }
 
+type CalibratedExerciseSeed = {
+  name: string;
+  targetSets: number;
+  targetRepRangeLow: number;
+  targetRepRangeHigh: number;
+  startWeight: number;
+};
+
+const CALIBRATED_SPLIT: Array<{ label: string; exercises: CalibratedExerciseSeed[] }> = [
+  {
+    label: "Push",
+    exercises: [
+      { name: "Barbell Bench Press", targetSets: 3, targetRepRangeLow: 6, targetRepRangeHigh: 10, startWeight: 135 },
+      { name: "Incline Dumbbell Press", targetSets: 3, targetRepRangeLow: 8, targetRepRangeHigh: 12, startWeight: 50 },
+      { name: "Triceps Pushdown", targetSets: 3, targetRepRangeLow: 10, targetRepRangeHigh: 14, startWeight: 70 },
+    ],
+  },
+  {
+    label: "Pull",
+    exercises: [
+      { name: "Barbell Row", targetSets: 3, targetRepRangeLow: 6, targetRepRangeHigh: 10, startWeight: 125 },
+      { name: "Lat Pulldown", targetSets: 3, targetRepRangeLow: 8, targetRepRangeHigh: 12, startWeight: 120 },
+      { name: "Barbell Curl", targetSets: 3, targetRepRangeLow: 10, targetRepRangeHigh: 14, startWeight: 55 },
+    ],
+  },
+  {
+    label: "Legs",
+    exercises: [
+      { name: "Back Squat", targetSets: 3, targetRepRangeLow: 5, targetRepRangeHigh: 8, startWeight: 185 },
+      { name: "Romanian Deadlift", targetSets: 3, targetRepRangeLow: 6, targetRepRangeHigh: 10, startWeight: 165 },
+      { name: "Leg Press", targetSets: 3, targetRepRangeLow: 10, targetRepRangeHigh: 15, startWeight: 250 },
+    ],
+  },
+];
+
+async function getSystemExerciseId(name: string) {
+  const exercise = await prisma.exercise.findFirst({
+    where: {
+      name,
+      createdByUserId: null,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!exercise) {
+    throw new Error(`Missing seeded exercise: ${name}`);
+  }
+
+  return exercise.id;
+}
+
+async function seedCalibratedUser() {
+  const passwordHash = await hash("demo123", 10);
+
+  const calibrated = await prisma.user.upsert({
+    where: { email: "calibrated@liftdiary.app" },
+    update: {
+      passwordHash,
+      goal: Goal.HYPERTROPHY,
+      experienceLevel: "INTERMEDIATE",
+      coachingStyle: "BALANCED",
+      units: "LB",
+      workoutsCompletedInCalibration: 12,
+      calibrationComplete: true,
+      calibrationLength: 7,
+    },
+    create: {
+      email: "calibrated@liftdiary.app",
+      passwordHash,
+      goal: Goal.HYPERTROPHY,
+      experienceLevel: "INTERMEDIATE",
+      coachingStyle: "BALANCED",
+      units: "LB",
+      workoutsCompletedInCalibration: 12,
+      calibrationComplete: true,
+      calibrationLength: 7,
+    },
+  });
+
+  await prisma.recommendation.deleteMany({ where: { userId: calibrated.id } });
+  await prisma.workoutSession.deleteMany({ where: { userId: calibrated.id } });
+
+  const routine = await prisma.routine.upsert({
+    where: { id: `${calibrated.id}-calibrated-routine` },
+    update: {
+      name: "Calibrated PPL",
+      splitType: SplitType.PUSH_PULL_LEGS,
+    },
+    create: {
+      id: `${calibrated.id}-calibrated-routine`,
+      userId: calibrated.id,
+      name: "Calibrated PPL",
+      splitType: SplitType.PUSH_PULL_LEGS,
+    },
+  });
+
+  const routineDays = [] as Array<{ id: string; label: string; exercises: CalibratedExerciseSeed[] }>;
+
+  for (let i = 0; i < CALIBRATED_SPLIT.length; i += 1) {
+    const templateDay = CALIBRATED_SPLIT[i];
+    const day = await prisma.routineDay.upsert({
+      where: { routineId_dayIndex: { routineId: routine.id, dayIndex: i } },
+      update: { label: templateDay.label },
+      create: {
+        routineId: routine.id,
+        dayIndex: i,
+        label: templateDay.label,
+      },
+      select: { id: true, label: true },
+    });
+
+    await prisma.routineDayExercise.deleteMany({ where: { routineDayId: day.id } });
+
+    for (let j = 0; j < templateDay.exercises.length; j += 1) {
+      const ex = templateDay.exercises[j];
+      const exerciseId = await getSystemExerciseId(ex.name);
+
+      await prisma.routineDayExercise.create({
+        data: {
+          routineDayId: day.id,
+          exerciseId,
+          orderIndex: j,
+          targetSets: ex.targetSets,
+          targetRepRangeLow: ex.targetRepRangeLow,
+          targetRepRangeHigh: ex.targetRepRangeHigh,
+        },
+      });
+    }
+
+    routineDays.push({
+      id: day.id,
+      label: day.label,
+      exercises: templateDay.exercises,
+    });
+  }
+
+  const sessionsToCreate = 12;
+
+  for (let i = 0; i < sessionsToCreate; i += 1) {
+    const dayIndex = i % routineDays.length;
+    const routineDay = routineDays[dayIndex];
+    const progressionBlock = Math.floor(i / routineDays.length);
+
+    const startedAt = new Date(Date.now() - (sessionsToCreate - i) * 48 * 60 * 60 * 1000);
+    const endedAt = new Date(startedAt.getTime() + 50 * 60 * 1000);
+
+    const session = await prisma.workoutSession.create({
+      data: {
+        userId: calibrated.id,
+        routineDayId: routineDay.id,
+        startedAt,
+        endedAt,
+        coachingStyleSnapshot: "BALANCED",
+        goalSnapshot: Goal.HYPERTROPHY,
+        unitsSnapshot: "LB",
+      },
+      select: { id: true },
+    });
+
+    for (const ex of routineDay.exercises) {
+      const exerciseId = await getSystemExerciseId(ex.name);
+      const weightBase = ex.startWeight + progressionBlock * 2.5;
+
+      for (let setIndex = 1; setIndex <= ex.targetSets; setIndex += 1) {
+        const repsSpan = ex.targetRepRangeHigh - ex.targetRepRangeLow + 1;
+        const reps = ex.targetRepRangeLow + ((i + setIndex) % Math.max(1, repsSpan));
+
+        await prisma.setEntry.create({
+          data: {
+            sessionId: session.id,
+            exerciseId,
+            setIndex,
+            weight: weightBase,
+            reps,
+            timestamp: new Date(startedAt.getTime() + setIndex * 6 * 60 * 1000),
+            isFailed: false,
+          },
+        });
+      }
+    }
+  }
+
+  console.log("✅ Calibrated dummy account ready: calibrated@liftdiary.app / demo123");
+}
+
 async function main() {
   await seedExercises();
   await seedDemoUser();
+  await seedCalibratedUser();
 }
 
 main()

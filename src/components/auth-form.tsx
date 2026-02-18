@@ -54,7 +54,7 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          minLength={8}
+          minLength={mode === "signup" ? 8 : 1}
           className="glass-input"
         />
       </label>
