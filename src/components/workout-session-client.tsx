@@ -86,6 +86,12 @@ function tutorialSearchUrl(exerciseName: string) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(toVideoQuery(exerciseName))}`;
 }
 
+function formatSeconds(seconds: number) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+}
+
 export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
   const router = useRouter();
   const [session, setSession] = useState<SessionPayload["session"] | null>(null);
@@ -95,6 +101,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
 
   const [activeRestExercise, setActiveRestExercise] = useState<string | null>(null);
   const [restSecondsLeft, setRestSecondsLeft] = useState(0);
+  const [restDurationSeconds, setRestDurationSeconds] = useState(0);
   const [submittingSetFor, setSubmittingSetFor] = useState<string | null>(null);
 
   const [setInputs, setSetInputs] = useState<Record<string, SetInput>>({});
@@ -206,6 +213,9 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
   const allExercisesComplete = !!session?.exercises.every((item) => item.loggedSets.length >= item.targetSets);
   const isResting = !!activeExercise && activeRestExercise === activeExercise.exercise.id && restSecondsLeft > 0;
   const completedExercisesCount = session?.exercises.filter((item) => item.loggedSets.length >= item.targetSets).length ?? 0;
+  const restProgress = restDurationSeconds > 0
+    ? Math.min(100, Math.round(((restDurationSeconds - restSecondsLeft) / restDurationSeconds) * 100))
+    : 0;
 
   async function refreshSession() {
     const data = await jsonFetch<SessionPayload>(`/api/sessions/${sessionId}`);
@@ -259,8 +269,10 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         },
       }));
 
+      const rest = updatedExercise.exercise.defaultRestSec || 90;
       setActiveRestExercise(exerciseId);
-      setRestSecondsLeft(updatedExercise.exercise.defaultRestSec || 90);
+      setRestDurationSeconds(rest);
+      setRestSecondsLeft(rest);
 
       if (updatedExercise.loggedSets.length >= updatedExercise.targetSets) {
         focusNextIncompleteExercise(updatedSession);
@@ -431,22 +443,6 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           </button>
         </div>
 
-        {isResting ? (
-          <div className="mt-2 rounded-xl border border-orange-300/35 bg-orange-300/10 px-3 py-2 text-sm text-zinc-100">
-            Rest timer: {restSecondsLeft}s
-            <button
-              type="button"
-              onClick={() => {
-                setRestSecondsLeft(0);
-                setActiveRestExercise(null);
-              }}
-              className="ml-3 text-xs text-zinc-200 underline"
-            >
-              Skip
-            </button>
-          </div>
-        ) : null}
-
         <div className="mt-2 space-y-1 text-xs text-zinc-300/80">
           {activeExercise.loggedSets.length === 0 ? (
             <p>No sets logged yet.</p>
@@ -497,6 +493,36 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
       <button onClick={finishWorkout} className="glass-button-ghost">
         {allExercisesComplete ? "Finish Workout" : "Finish Workout Early"}
       </button>
+
+      {isResting ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-5 backdrop-blur-md">
+          <div className="glass-card-strong w-full max-w-md rounded-3xl p-6 text-center">
+            <p className="text-xs uppercase tracking-[0.22em] text-orange-200/80">Rest Timer</p>
+            <h2 className="mt-2 text-xl font-semibold text-white">{activeExercise.exercise.name}</h2>
+
+            <div className="mt-6 overflow-hidden rounded-full border border-white/20 bg-white/8">
+              <div
+                className="h-2 bg-gradient-to-r from-red-700 via-orange-500 to-amber-400 transition-all"
+                style={{ width: `${restProgress}%` }}
+              />
+            </div>
+
+            <p className="mt-6 text-6xl font-bold tracking-tight text-white">{formatSeconds(restSecondsLeft)}</p>
+            <p className="mt-2 text-sm text-zinc-300/80">Breathe. Reset. Next set incoming.</p>
+
+            <button
+              type="button"
+              onClick={() => {
+                setRestSecondsLeft(0);
+                setActiveRestExercise(null);
+              }}
+              className="glass-button mt-6"
+            >
+              Skip Rest
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
