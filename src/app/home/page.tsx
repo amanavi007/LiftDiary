@@ -106,7 +106,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="glass-card rounded-2xl p-3 pb-24">
+      <section className="glass-card rounded-2xl p-3">
         <p className="text-xs uppercase tracking-[0.14em] text-zinc-300/70">Recent Activity</p>
         {lastSession ? (
           <div className="mt-1.5 space-y-0.5">
