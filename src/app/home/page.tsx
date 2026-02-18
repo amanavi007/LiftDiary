@@ -4,13 +4,11 @@ import { ScreenShell } from "@/components/screen-shell";
 import { isOnboardingComplete, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-function cardLink(href: string, title: string, caption: string) {
-  return (
-    <Link href={href} className="glass-card block rounded-2xl p-4 transition hover:bg-white/12">
-      <p className="font-semibold text-white">{title}</p>
-      <p className="text-sm text-zinc-200/75">{caption}</p>
-    </Link>
-  );
+function formatDate(value: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+  }).format(value);
 }
 
 export default async function HomePage() {
@@ -20,7 +18,14 @@ export default async function HomePage() {
   const routine = user.routines[0];
   const lastSession = await prisma.workoutSession.findFirst({
     where: { userId: user.id, endedAt: { not: null } },
-    include: { routineDay: true },
+    include: {
+      routineDay: true,
+      _count: {
+        select: {
+          sets: true,
+        },
+      },
+    },
     orderBy: { startedAt: "desc" },
   });
 
@@ -38,28 +43,81 @@ export default async function HomePage() {
     },
   });
 
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  const sessionsThisWeek = await prisma.workoutSession.count({
+    where: {
+      userId: user.id,
+      endedAt: { gte: sevenDaysAgo },
+    },
+  });
+
+  const routineDays = routine?.days?.length ?? 0;
+  const calibrationProgress = `${Math.min(user.workoutsCompletedInCalibration, user.calibrationLength)}/${user.calibrationLength}`;
+
   return (
     <ScreenShell>
-      <header className="mb-5">
+      <header className="mb-3">
         <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">LiftDiary</p>
-        <h1 className="text-3xl font-bold text-white">Train today</h1>
-        <p className="text-sm text-zinc-200/80">Next: {nextDay}</p>
+        <h1 className="text-3xl font-bold text-white">Train hard today</h1>
       </header>
 
-      <Link
-        href="/workout/start"
-        className="glass-button mb-4 block py-4 text-center text-lg"
-      >
-        START WORKOUT
-      </Link>
+      <section className="glass-card-strong mb-4 rounded-2xl p-4">
+        <p className="text-xs uppercase tracking-[0.14em] text-zinc-300/70">Today&apos;s Focus</p>
+        <p className="mt-1 text-2xl font-bold text-white">{nextDay}</p>
+        <p className="text-sm text-zinc-200/80">Show up, log clean sets, and push progression.</p>
 
-      <p className="mb-4 text-xs text-zinc-200/65">Streak: {streak} sessions</p>
+        <Link
+          href="/workout/start"
+          className="glass-button mt-4 block py-4 text-center text-lg"
+        >
+          START WORKOUT
+        </Link>
+      </section>
 
-      <section className="space-y-2">
-        {cardLink("/history", "Workout History", "View past sessions and filters")}
-        {cardLink("/onboarding", "Edit Routine", "Adjust split, exercises, and targets")}
-        {cardLink("/dashboard", "PR Dashboard", "Estimated 1RM, PRs, and trends")}
-        {cardLink("/settings", "Settings", "Units, coaching style, goal, calibration")}
+      <section className="mb-4 grid grid-cols-2 gap-3">
+        <div className="glass-card rounded-xl px-3 py-3">
+          <p className="text-xs text-zinc-300/70">Total Sessions</p>
+          <p className="text-lg font-semibold text-white">{streak}</p>
+        </div>
+        <div className="glass-card rounded-xl px-3 py-3">
+          <p className="text-xs text-zinc-300/70">Last 7 Days</p>
+          <p className="text-lg font-semibold text-white">{sessionsThisWeek}</p>
+        </div>
+        <div className="glass-card rounded-xl px-3 py-3">
+          <p className="text-xs text-zinc-300/70">Routine Days</p>
+          <p className="text-lg font-semibold text-white">{routineDays || "—"}</p>
+        </div>
+        <div className="glass-card rounded-xl px-3 py-3">
+          <p className="text-xs text-zinc-300/70">Calibration</p>
+          <p className="text-lg font-semibold text-white">{calibrationProgress}</p>
+        </div>
+      </section>
+
+      <section className="glass-card rounded-2xl p-4">
+        <p className="text-xs uppercase tracking-[0.14em] text-zinc-300/70">Recent Activity</p>
+        {lastSession ? (
+          <div className="mt-2 space-y-1">
+            <p className="text-sm font-semibold text-white">{lastSession.routineDay.label}</p>
+            <p className="text-xs text-zinc-300/75">
+              {formatDate(lastSession.startedAt)} • {lastSession._count.sets} sets logged
+            </p>
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-zinc-300/75">No sessions logged yet. Start your first workout now.</p>
+        )}
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <div className="rounded-xl bg-white/8 px-3 py-2">
+            <p className="text-xs text-zinc-300/70">Next Up</p>
+            <p className="text-sm font-semibold text-white">{nextDay}</p>
+          </div>
+          <div className="rounded-xl bg-white/8 px-3 py-2">
+            <p className="text-xs text-zinc-300/70">Status</p>
+            <p className="text-sm font-semibold text-white">Ready</p>
+          </div>
+        </div>
       </section>
     </ScreenShell>
   );

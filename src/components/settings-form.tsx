@@ -1,6 +1,7 @@
 "use client";
 
 import { CoachingStyle, Goal, Units } from "@prisma/client";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { jsonFetch } from "@/lib/client";
@@ -83,6 +84,10 @@ export function SettingsForm({
       <button onClick={save} disabled={saving} className="glass-button">
         {saving ? "Saving..." : "Save Settings"}
       </button>
+
+      <Link href="/onboarding" className="glass-button-ghost block text-center text-sm">
+        Edit Routine
+      </Link>
 
       <button onClick={logout} className="glass-button-ghost text-sm">
         Log Out
