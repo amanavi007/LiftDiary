@@ -85,8 +85,12 @@ export function SettingsForm({
         {saving ? "Saving..." : "Save Settings"}
       </button>
 
-      <Link href="/onboarding" className="glass-button-ghost block text-center text-sm">
-        Edit Routine
+      <Link href="/onboarding?mode=edit" className="glass-button-ghost block text-center text-sm">
+        Edit Current Routine
+      </Link>
+
+      <Link href="/onboarding?mode=new" className="glass-button-ghost block text-center text-sm">
+        Add New Split
       </Link>
 
       <button onClick={logout} className="glass-button-ghost text-sm">

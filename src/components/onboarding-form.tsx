@@ -33,6 +33,26 @@ type RecommendedDay = {
   recommendedExercises: Exercise[];
 };
 
+type CurrentRoutinePayload = {
+  routine: {
+    name: string;
+    splitType: SplitType;
+    days: Array<{
+      label: string;
+      exercises: Array<{
+        exerciseId: string;
+        targetSets: number;
+        targetRepRangeLow: number;
+        targetRepRangeHigh: number;
+        exercise: {
+          id: string;
+          name: string;
+        };
+      }>;
+    }>;
+  } | null;
+};
+
 const GOALS: Goal[] = ["STRENGTH", "HYPERTROPHY", "ENDURANCE", "GENERAL_FITNESS"];
 const EXPERIENCES: ExperienceLevel[] = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
 const STYLES: CoachingStyle[] = ["CONSERVATIVE", "BALANCED", "AGGRESSIVE"];
@@ -67,7 +87,7 @@ function rankExercises(exercises: Exercise[], query: string) {
   });
 }
 
-export function OnboardingForm() {
+export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
   const router = useRouter();
   const [goal, setGoal] = useState<Goal>("GENERAL_FITNESS");
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>("BEGINNER");
@@ -93,28 +113,75 @@ export function OnboardingForm() {
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentRoutineLoaded, setCurrentRoutineLoaded] = useState(false);
+
+  useEffect(() => {
+    if (mode !== "edit") return;
+
+    let cancelled = false;
+
+    async function loadCurrentRoutine() {
+      try {
+        const data = await jsonFetch<CurrentRoutinePayload>("/api/routines/current");
+        if (cancelled || !data.routine) return;
+
+        setSplitType(data.routine.splitType);
+        setRoutineName(data.routine.name);
+        setDays(
+          data.routine.days.map((day) => ({
+            label: day.label,
+            exercises: day.exercises.map((exercise) => ({
+              exerciseId: exercise.exercise.id,
+              name: exercise.exercise.name,
+              targetSets: exercise.targetSets,
+              targetRepRangeLow: exercise.targetRepRangeLow,
+              targetRepRangeHigh: exercise.targetRepRangeHigh,
+            })),
+          })),
+        );
+        setActiveDayIndex(0);
+        setCurrentRoutineLoaded(true);
+      } catch {
+        if (!cancelled) {
+          setCurrentRoutineLoaded(false);
+        }
+      }
+    }
+
+    loadCurrentRoutine();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
 
   useEffect(() => {
     async function loadTemplate() {
       const data = await jsonFetch<{ recommendedDays: RecommendedDay[] }>(
         `/api/onboarding?splitType=${splitType}&goal=${goal}`,
       );
+      setRecommendedByDay(data.recommendedDays.map((day) => day.recommendedExercises ?? []));
+
+      if (mode === "edit" && currentRoutineLoaded) {
+        return;
+      }
+
       setDays(
         data.recommendedDays.map((day) => ({
           label: day.label,
           exercises: [],
         })),
       );
-      setRecommendedByDay(data.recommendedDays.map((day) => day.recommendedExercises ?? []));
       setActiveDayIndex(0);
     }
 
     loadTemplate().catch(() => {
+      if (mode === "edit" && currentRoutineLoaded) return;
       setDays([{ label: "Day 1", exercises: [] }]);
       setRecommendedByDay([[]]);
       setActiveDayIndex(0);
     });
-  }, [splitType, goal]);
+  }, [splitType, goal, mode, currentRoutineLoaded]);
 
   useEffect(() => {
     jsonFetch<{ exercises: Exercise[] }>("/api/exercises")
@@ -268,6 +335,7 @@ export function OnboardingForm() {
           routineName,
           days,
           calibrationLength,
+          replaceExisting: mode !== "new",
         }),
       });
       router.push("/home");
@@ -281,7 +349,9 @@ export function OnboardingForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 pb-8">
-      <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">Account Setup</p>
+      <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">
+        {mode === "new" ? "Add New Split" : "Edit Current Routine"}
+      </p>
       <h1 className="text-3xl font-bold text-white">{stepMeta[step].title}</h1>
       <p className="text-sm text-zinc-200/75">{stepMeta[step].subtitle}</p>
 
@@ -517,7 +587,7 @@ export function OnboardingForm() {
           </button>
         ) : (
           <button disabled={saving} className="glass-button disabled:opacity-50">
-            {saving ? "Saving..." : "Save Routine"}
+            {saving ? "Saving..." : mode === "new" ? "Save New Split" : "Update Routine"}
           </button>
         )}
       </div>

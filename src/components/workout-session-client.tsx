@@ -302,19 +302,27 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
   const canLogSet = activeExercise.loggedSets.length < activeExercise.targetSets;
 
   return (
-    <div className="space-y-3 pb-10">
-      <header className="glass-card-strong rounded-2xl p-4">
-        <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">{session.routineDay.label}</p>
-        <h1 className="text-2xl font-bold text-white">Coach Mode</h1>
-        <p className="text-sm text-zinc-200/80">One exercise at a time. One set at a time.</p>
-
-        <div className="mt-3 overflow-hidden rounded-full border border-white/15 bg-white/8">
-          <div className="h-2 bg-gradient-to-r from-red-700 to-orange-500" style={{ width: `${progressPercent}%` }} />
+    <div className="space-y-2 pb-4">
+      <header className="glass-card-strong rounded-2xl p-3">
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.2em] text-orange-200/70">{session.routineDay.label}</p>
+            <h1 className="text-xl font-bold text-white">Coach Mode</h1>
+          </div>
+          <p className="text-xs text-zinc-300/85">{loggedSetCount}/{totalTargetSets} sets</p>
         </div>
-        <p className="mt-1 text-xs text-zinc-300/75">Progress: {loggedSetCount}/{totalTargetSets} sets</p>
+
+        <div className="mt-2 overflow-hidden rounded-full border border-white/15 bg-white/8">
+          <div className="h-1.5 bg-gradient-to-r from-red-700 to-orange-500" style={{ width: `${progressPercent}%` }} />
+        </div>
+
+        <p className="mt-2 text-xs text-zinc-100">
+          Rec: {activeExercise.recommendation.recommendedWeight || "—"} {session.units} • {activeExercise.recommendation.recommendedRepLow}-{activeExercise.recommendation.recommendedRepHigh} reps • {confidencePercent}%
+        </p>
+        <p className="mt-1 text-[11px] text-zinc-300/75">{activeExercise.recommendation.reasonText}</p>
       </header>
 
-      <section className="glass-card rounded-2xl p-4">
+      <section className="glass-card rounded-2xl p-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-lg font-semibold text-white">{activeExercise.exercise.name}</p>
           <span className="glass-pill px-2 py-1 text-xs text-zinc-100">Set {activeSetNumber}/{activeExercise.targetSets}</span>
@@ -324,19 +332,10 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           Target reps: {activeExercise.targetRepRangeLow}-{activeExercise.targetRepRangeHigh}
         </p>
 
-        <div className="mt-3 rounded-xl border border-white/15 bg-white/6 p-3">
-          <p className="text-xs uppercase tracking-[0.12em] text-zinc-300/70">Coach Recommendation</p>
-          <p className="mt-1 text-sm text-white">
-            {activeExercise.recommendation.recommendedWeight || "—"} {session.units} • {activeExercise.recommendation.recommendedRepLow}-{activeExercise.recommendation.recommendedRepHigh} reps
-          </p>
-          <p className="mt-1 text-xs text-zinc-300/75">Confidence: {confidencePercent}%</p>
-          <p className="mt-1 text-xs text-zinc-300/70">{activeExercise.recommendation.reasonText}</p>
-        </div>
-
-        <div className="mt-3 rounded-xl border border-white/15 bg-black/30 p-2">
+        <div className="mt-2 rounded-xl border border-white/15 bg-black/30 p-2">
           <p className="mb-2 text-xs uppercase tracking-[0.12em] text-zinc-300/70">Movement Demo</p>
           {loadingTutorial ? (
-            <div className="h-52 rounded-lg border border-white/15 bg-white/6 px-3 py-2 text-sm text-zinc-300/80">
+            <div className="h-36 rounded-lg border border-white/15 bg-white/6 px-3 py-2 text-sm text-zinc-300/80">
               Loading tutorial video...
             </div>
           ) : tutorialVideoId ? (
@@ -344,7 +343,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
               <iframe
                 title={`${activeExercise.exercise.name} tutorial`}
                 src={`https://www.youtube.com/embed/${tutorialVideoId}?rel=0&modestbranding=1&playsinline=1`}
-                className="h-52 w-full"
+                className="h-36 w-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
@@ -367,7 +366,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           ) : null}
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+        <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
           <label>
             Weight ({session.units})
             <input
@@ -421,7 +420,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           Mark this set as failed
         </label>
 
-        <div className="mt-3 flex gap-2">
+        <div className="mt-2 flex gap-2">
           <button
             type="button"
             onClick={logSet}
@@ -433,7 +432,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         </div>
 
         {isResting ? (
-          <div className="mt-3 rounded-xl border border-orange-300/35 bg-orange-300/10 px-3 py-2 text-sm text-zinc-100">
+          <div className="mt-2 rounded-xl border border-orange-300/35 bg-orange-300/10 px-3 py-2 text-sm text-zinc-100">
             Rest timer: {restSecondsLeft}s
             <button
               type="button"
@@ -448,7 +447,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           </div>
         ) : null}
 
-        <div className="mt-3 space-y-1 text-xs text-zinc-300/80">
+        <div className="mt-2 space-y-1 text-xs text-zinc-300/80">
           {activeExercise.loggedSets.length === 0 ? (
             <p>No sets logged yet.</p>
           ) : (
