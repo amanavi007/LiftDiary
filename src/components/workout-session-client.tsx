@@ -413,11 +413,6 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         <div className="mt-2 overflow-hidden rounded-full border border-white/15 bg-white/8">
           <div className="h-1.5 bg-gradient-to-r from-red-700 to-orange-500" style={{ width: `${progressPercent}%` }} />
         </div>
-
-        <p className="mt-2 text-xs text-zinc-100">
-          Rec: {activeExercise.recommendation.recommendedWeight || "—"} {session.units} • {activeExercise.recommendation.recommendedRepLow}-{activeExercise.recommendation.recommendedRepHigh} reps • {confidencePercent}%
-        </p>
-        <p className="mt-1 text-[11px] text-zinc-300/75">{activeExercise.recommendation.reasonText}</p>
       </header>
 
       <section className="glass-card rounded-2xl p-3">
@@ -543,19 +538,19 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         </div>
       </section>
 
-      <details className="glass-card rounded-2xl p-3">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-sm font-semibold text-zinc-100">
-          <span>Exercise Queue</span>
-          <span className="text-xs text-zinc-300/75">{completedExercisesCount}/{session.exercises.length} complete ▾</span>
+      <details className="glass-card rounded-xl p-2 text-xs">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs text-zinc-200">
+          <span>Queue ({completedExercisesCount}/{session.exercises.length})</span>
+          <span>▾</span>
         </summary>
 
-        <div className="mt-3 space-y-2">
+        <div className="mt-2 space-y-1">
           {orderedExercises.map((item, index) => {
             const done = item.loggedSets.length >= item.targetSets || skippedExerciseIds.includes(item.exercise.id);
             const active = item.exercise.id === activeExercise.exercise.id;
             const displayExercise = swapByExerciseId[item.exercise.id] ?? item.exercise;
             return (
-              <div key={item.exercise.id} className={`w-full rounded-xl px-3 py-2 text-left text-sm transition ${
+              <div key={item.exercise.id} className={`w-full rounded-lg px-2 py-1.5 text-left text-xs transition ${
                 active ? "bg-white/18 text-white" : "bg-white/6 text-zinc-200/90"
               }`}>
                 <button type="button" onClick={() => setActiveExerciseId(item.exercise.id)} className="w-full text-left">
@@ -621,10 +616,10 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         </div>
       </details>
 
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
+      {error ? <p className="text-xs text-red-300">{error}</p> : null}
 
-      <button onClick={finishWorkout} className="glass-button-ghost">
-        {allExercisesComplete ? "Finish Workout" : "Finish Workout Early"}
+      <button onClick={finishWorkout} className="glass-button-ghost py-2 text-xs">
+        {allExercisesComplete ? "Finish" : "Finish Early"}
       </button>
 
       {isResting ? (

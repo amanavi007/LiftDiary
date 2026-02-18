@@ -15,12 +15,6 @@ type DayPlan = {
   }>;
 };
 
-function readinessBand(score: number) {
-  if (score >= 12) return { label: "High Readiness", tone: "text-emerald-300" };
-  if (score >= 9) return { label: "Moderate Readiness", tone: "text-amber-300" };
-  return { label: "Low Readiness", tone: "text-orange-300" };
-}
-
 export function HomeTodayPlanClient({
   dayPlans,
   defaultDayId,
@@ -30,9 +24,6 @@ export function HomeTodayPlanClient({
 }) {
   const router = useRouter();
   const [selectedDayId, setSelectedDayId] = useState(defaultDayId);
-  const [sleep, setSleep] = useState(3);
-  const [soreness, setSoreness] = useState(3);
-  const [stress, setStress] = useState(3);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,9 +31,6 @@ export function HomeTodayPlanClient({
     () => dayPlans.find((day) => day.id === selectedDayId) ?? dayPlans[0],
     [dayPlans, selectedDayId],
   );
-
-  const readinessScore = sleep + (6 - soreness) + (6 - stress);
-  const readiness = readinessBand(readinessScore);
 
   const estimatedMinutes = useMemo(() => {
     if (!selectedDay) return 0;
@@ -93,37 +81,6 @@ export function HomeTodayPlanClient({
             {day.label}
           </button>
         ))}
-      </div>
-
-      <div className="mt-3 space-y-2 rounded-xl border border-white/15 bg-white/6 p-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-200/70">Pre-Workout Readiness</p>
-
-        <div className="grid grid-cols-3 gap-2 text-center text-xs">
-          <label className="rounded-lg border border-white/12 bg-black/20 p-2">
-            <span className="block text-zinc-300/75">Sleep</span>
-            <input type="range" min={1} max={5} value={sleep} onChange={(e) => setSleep(Number(e.target.value))} className="glass-slider mt-1" />
-            <span className="mt-1 block text-zinc-100">{sleep}/5</span>
-          </label>
-          <label className="rounded-lg border border-white/12 bg-black/20 p-2">
-            <span className="block text-zinc-300/75">Soreness</span>
-            <input type="range" min={1} max={5} value={soreness} onChange={(e) => setSoreness(Number(e.target.value))} className="glass-slider mt-1" />
-            <span className="mt-1 block text-zinc-100">{soreness}/5</span>
-          </label>
-          <label className="rounded-lg border border-white/12 bg-black/20 p-2">
-            <span className="block text-zinc-300/75">Stress</span>
-            <input type="range" min={1} max={5} value={stress} onChange={(e) => setStress(Number(e.target.value))} className="glass-slider mt-1" />
-            <span className="mt-1 block text-zinc-100">{stress}/5</span>
-          </label>
-        </div>
-
-        <p className={`text-sm font-semibold ${readiness.tone}`}>{readiness.label}</p>
-        <p className="text-xs text-zinc-300/80">
-          {readinessScore >= 12
-            ? "Push your top sets today."
-            : readinessScore >= 9
-              ? "Train as planned and keep quality reps."
-              : "Consider reducing load or leaving 1-2 reps in reserve."}
-        </p>
       </div>
 
       <div className="mt-3 space-y-2 rounded-xl border border-white/12 bg-black/20 p-3">

@@ -98,13 +98,15 @@ export default async function HomePage() {
           <p className="text-xs text-zinc-300/70">Routine Days</p>
           <p className="text-lg font-semibold text-white">{routineDays || "—"}</p>
         </div>
-        <div className="glass-card rounded-xl px-3 py-3">
-          <p className="text-xs text-zinc-300/70">Calibration</p>
-          <p className="text-lg font-semibold text-white">{calibrationProgress}</p>
-        </div>
+        {!user.calibrationComplete && (
+          <div className="glass-card rounded-xl px-3 py-3">
+            <p className="text-xs text-zinc-300/70">Calibration</p>
+            <p className="text-lg font-semibold text-white">{calibrationProgress}</p>
+          </div>
+        )}
       </section>
 
-      <section className="glass-card rounded-2xl p-4">
+      <section className="glass-card rounded-2xl p-4 pb-24">
         <p className="text-xs uppercase tracking-[0.14em] text-zinc-300/70">Recent Activity</p>
         {lastSession ? (
           <div className="mt-2 space-y-1">
