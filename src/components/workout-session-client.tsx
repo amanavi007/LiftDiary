@@ -425,10 +425,10 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           Target reps: {activeExercise.targetRepRangeLow}-{activeExercise.targetRepRangeHigh}
         </p>
 
-        <div className="mt-2 rounded-xl border border-white/15 bg-black/30 p-2">
+        <div className="mt-3 rounded-xl border border-white/15 bg-black/30 p-3">
           <p className="mb-2 text-xs uppercase tracking-[0.12em] text-zinc-300/70">Movement Demo</p>
           {loadingTutorial ? (
-            <div className="h-36 rounded-lg border border-white/15 bg-white/6 px-3 py-2 text-sm text-zinc-300/80">
+            <div className="h-56 rounded-lg border border-white/15 bg-white/6 px-3 py-2 text-sm text-zinc-300/80">
               Loading tutorial video...
             </div>
           ) : tutorialVideoId ? (
@@ -436,7 +436,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
               <iframe
                 title={`${activeExerciseDisplay?.name ?? activeExercise.exercise.name} tutorial`}
                 src={`https://www.youtube.com/embed/${tutorialVideoId}?rel=0&modestbranding=1&playsinline=1`}
-                className="h-36 w-full"
+                className="h-56 w-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                 referrerPolicy="strict-origin-when-cross-origin"
                 allowFullScreen
@@ -459,9 +459,9 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           ) : null}
         </div>
 
-        <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+        <div className="mt-4 grid grid-cols-2 gap-3">
           <label>
-            Weight ({session.units})
+            <span className="text-xs text-zinc-300/75">Weight ({session.units})</span>
             <input
               type="number"
               value={input.weight}
@@ -474,11 +474,11 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
                   },
                 }))
               }
-              className="glass-input mt-1 px-2 py-1"
+              className="glass-input mt-1.5 px-4 py-3 text-center text-3xl font-bold tabular-nums"
             />
           </label>
           <label>
-            Reps
+            <span className="text-xs text-zinc-300/75">Reps</span>
             <input
               type="number"
               value={input.reps}
@@ -491,12 +491,12 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
                   },
                 }))
               }
-              className="glass-input mt-1 px-2 py-1"
+              className="glass-input mt-1.5 px-4 py-3 text-center text-3xl font-bold tabular-nums"
             />
           </label>
         </div>
 
-        <label className="mt-2 flex items-center gap-2 text-xs text-zinc-200/85">
+        <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-lg border border-white/12 bg-white/5 px-3 py-2.5">
           <input
             type="checkbox"
             checked={input.isFailed}
@@ -509,16 +509,17 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
                 },
               }))
             }
+            className="h-5 w-5 cursor-pointer rounded border-white/20 bg-white/10 text-red-500 focus:ring-2 focus:ring-red-500/50 focus:ring-offset-0"
           />
-          Mark this set as failed
+          <span className="text-sm text-zinc-200">Mark this set as failed</span>
         </label>
 
-        <div className="mt-2 flex gap-2">
+        <div className="mt-4 flex gap-2">
           <button
             type="button"
             onClick={logSet}
             disabled={!canLogSet || submittingSetFor === activeExercise.exercise.id}
-            className="glass-button"
+            className="glass-button py-3 text-base font-semibold"
           >
             {submittingSetFor === activeExercise.exercise.id ? "Logging..." : canLogSet ? "Log Set" : "Exercise Complete"}
           </button>
@@ -538,11 +539,12 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         </div>
       </section>
 
-      <details className="glass-card rounded-xl p-2 text-xs">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs text-zinc-200">
-          <span>Queue ({completedExercisesCount}/{session.exercises.length})</span>
-          <span>▾</span>
-        </summary>
+      <div className="grid grid-cols-2 gap-2">
+        <details className="glass-card rounded-xl p-2 text-xs">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs text-zinc-200">
+            <span>Queue ({completedExercisesCount}/{session.exercises.length})</span>
+            <span>▾</span>
+          </summary>
 
         <div className="mt-2 space-y-1">
           {orderedExercises.map((item, index) => {
@@ -614,13 +616,14 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
             );
           })}
         </div>
-      </details>
+        </details>
+
+        <button onClick={finishWorkout} className="glass-card rounded-xl p-2 text-xs text-zinc-200 hover:bg-white/8">
+          {allExercisesComplete ? "Finish" : "Finish Early"}
+        </button>
+      </div>
 
       {error ? <p className="text-xs text-red-300">{error}</p> : null}
-
-      <button onClick={finishWorkout} className="glass-button-ghost py-2 text-xs">
-        {allExercisesComplete ? "Finish" : "Finish Early"}
-      </button>
 
       {isResting ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 px-5 backdrop-blur-md">
