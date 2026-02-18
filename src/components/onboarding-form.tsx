@@ -122,6 +122,9 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentRoutineLoaded, setCurrentRoutineLoaded] = useState(false);
+  
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
+  const [screenshotError, setScreenshotError] = useState<string | null>(null);
 
   useEffect(() => {
     if (mode !== "edit") return;
@@ -321,6 +324,71 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
     addExercise(data.exercise);
   }
 
+  async function handleScreenshotUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingScreenshot(true);
+    setScreenshotError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("screenshot", file);
+
+      const response = await fetch("/api/parse-split-screenshot", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to parse screenshot");
+      }
+
+      const data = await response.json();
+
+      // Map the parsed days to our routine structure
+      const parsedDays: RoutineDay[] = data.days.map((day: any) => ({
+        label: day.label,
+        exercises: day.exercises
+          .map((ex: any) => {
+            // Try to find matching exercise in catalog
+            const matchingExercise = exerciseCatalog.find(
+              (catalogEx) =>
+                catalogEx.name.toLowerCase() === ex.name.toLowerCase() ||
+                catalogEx.name.toLowerCase().includes(ex.name.toLowerCase()) ||
+                ex.name.toLowerCase().includes(catalogEx.name.toLowerCase())
+            );
+
+            if (matchingExercise) {
+              return {
+                exerciseId: matchingExercise.id,
+                name: matchingExercise.name,
+                targetSets: ex.sets || 3,
+                targetRepRangeLow: ex.repLow || defaultRepRange.low,
+                targetRepRangeHigh: ex.repHigh || defaultRepRange.high,
+              };
+            }
+            return null;
+          })
+          .filter(Boolean) as RoutineExercise[],
+      }));
+
+      // Update days with parsed data
+      setDays(parsedDays);
+      setActiveDayIndex(0);
+
+      // Show success message or notification
+      setError(null);
+    } catch (err) {
+      setScreenshotError(err instanceof Error ? err.message : "Failed to parse screenshot");
+    } finally {
+      setUploadingScreenshot(false);
+      // Reset file input
+      event.target.value = "";
+    }
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
@@ -492,6 +560,29 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
 
       {step === FINAL_STEP ? (
         <section className="glass-card space-y-3 rounded-2xl p-4">
+          <div className="rounded-xl border border-white/15 bg-white/5 p-3">
+            <p className="text-sm font-semibold text-zinc-100">📸 Import from Screenshot</p>
+            <p className="mt-1 text-xs text-zinc-300/75">Upload a screenshot of your workout split and we'll auto-populate your exercises</p>
+            
+            <label className="mt-3 block">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleScreenshotUpload}
+                disabled={uploadingScreenshot}
+                className="hidden"
+                id="screenshot-upload"
+              />
+              <span className="glass-button block cursor-pointer py-2 text-center text-sm">
+                {uploadingScreenshot ? "Analyzing..." : "Choose Screenshot"}
+              </span>
+            </label>
+            
+            {screenshotError && (
+              <p className="mt-2 text-xs text-red-300">{screenshotError}</p>
+            )}
+          </div>
+
           <div className="flex gap-2 overflow-x-auto pb-1">
             {days.map((day, i) => (
               <button
