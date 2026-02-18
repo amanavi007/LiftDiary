@@ -106,25 +106,25 @@ export default async function HomePage() {
         )}
       </section>
 
-      <section className="glass-card rounded-2xl p-4 pb-24">
+      <section className="glass-card rounded-2xl p-3 pb-24">
         <p className="text-xs uppercase tracking-[0.14em] text-zinc-300/70">Recent Activity</p>
         {lastSession ? (
-          <div className="mt-2 space-y-1">
+          <div className="mt-1.5 space-y-0.5">
             <p className="text-sm font-semibold text-white">{lastSession.routineDay.label}</p>
             <p className="text-xs text-zinc-300/75">
               {formatDate(lastSession.startedAt)} • {lastSession._count.sets} sets logged
             </p>
           </div>
         ) : (
-          <p className="mt-2 text-sm text-zinc-300/75">No sessions logged yet. Start your first workout now.</p>
+          <p className="mt-1.5 text-sm text-zinc-300/75">No sessions logged yet. Start your first workout now.</p>
         )}
 
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-white/8 px-3 py-2">
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <div className="rounded-xl bg-white/8 px-2.5 py-1.5">
             <p className="text-xs text-zinc-300/70">Next Up</p>
             <p className="text-sm font-semibold text-white">{nextDay}</p>
           </div>
-          <div className="rounded-xl bg-white/8 px-3 py-2">
+          <div className="rounded-xl bg-white/8 px-2.5 py-1.5">
             <p className="text-xs text-zinc-300/70">Status</p>
             <p className="text-sm font-semibold text-white">Ready</p>
           </div>
