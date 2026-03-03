@@ -405,10 +405,12 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         <div className="flex items-start justify-between gap-2">
           <div>
             <p className="text-[10px] uppercase tracking-[0.2em] text-orange-200/70">{session.routineDay.label}</p>
-            <h1 className="text-xl font-bold text-white">Coach Mode</h1>
+            <h1 className="text-xl font-bold text-white">Workout Session</h1>
           </div>
           <p className="text-xs text-zinc-300/85">{loggedSetCount}/{totalTargetSets} sets</p>
         </div>
+
+        <p className="mt-2 text-xs text-zinc-300/80">Follow the active exercise, enter your completed set, then tap Log Set.</p>
 
         <div className="mt-2 overflow-hidden rounded-full border border-white/15 bg-white/8">
           <div className="h-1.5 bg-gradient-to-r from-red-700 to-orange-500" style={{ width: `${progressPercent}%` }} />
@@ -424,6 +426,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         <p className="mt-1 text-xs text-zinc-200/80">
           Target reps: {activeExercise.targetRepRangeLow}-{activeExercise.targetRepRangeHigh}
         </p>
+        <p className="mt-1 text-xs text-zinc-300/75">Recommended load confidence: {confidencePercent}%</p>
 
         <div className="mt-3 rounded-xl border border-white/15 bg-black/30 p-3">
           <p className="mb-2 text-xs uppercase tracking-[0.12em] text-zinc-300/70">Movement Demo</p>
@@ -542,7 +545,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
       <div className="grid grid-cols-2 gap-2">
         <details className="glass-card rounded-xl p-2 text-xs">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-xs text-zinc-200">
-            <span>Queue ({completedExercisesCount}/{session.exercises.length})</span>
+            <span>Exercise Queue ({completedExercisesCount}/{session.exercises.length})</span>
             <span>▾</span>
           </summary>
 

@@ -37,7 +37,8 @@ export function StartWorkoutClient({ days }: { days: DayItem[] }) {
   return (
     <section className="glass-card-strong space-y-3 rounded-2xl p-5">
       <h1 className="text-2xl font-bold text-white">Start Workout</h1>
-      <p className="text-sm text-zinc-200/80">Choose a day and launch your session.</p>
+      <p className="text-sm text-zinc-200/80">Choose a day, start your session, and log each set as you train.</p>
+      <p className="text-xs text-zinc-300/75">Tip: if you are new, pick the top option and follow the suggested targets.</p>
 
       <div className="space-y-2">
         {days.map((day) => (

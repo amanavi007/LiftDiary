@@ -2,7 +2,7 @@
 
 import { CoachingStyle, ExperienceLevel, Goal, SplitType, Units } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { jsonFetch } from "@/lib/client";
 
 type Exercise = {
@@ -53,11 +53,30 @@ type CurrentRoutinePayload = {
   } | null;
 };
 
+type ParsedScreenshotExercise = {
+  name: string;
+  sets?: number;
+  repLow?: number;
+  repHigh?: number;
+};
+
+type ParsedScreenshotDay = {
+  label: string;
+  exercises: ParsedScreenshotExercise[];
+};
+
+type ParsedScreenshotPayload = {
+  days: ParsedScreenshotDay[];
+};
+
 const GOALS: Goal[] = ["STRENGTH", "HYPERTROPHY", "ENDURANCE", "GENERAL_FITNESS"];
 const EXPERIENCES: ExperienceLevel[] = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
 const STYLES: CoachingStyle[] = ["CONSERVATIVE", "BALANCED", "AGGRESSIVE"];
 const SPLITS: SplitType[] = ["PUSH_PULL_LEGS", "UPPER_LOWER", "FULL_BODY", "BRO_SPLIT", "CUSTOM"];
-const FINAL_STEP = 7;
+const BUILD_ENTRY_STEP = 7;
+const IMPORT_SCREENSHOT_STEP = 8;
+const FINAL_STEP = 9;
+const MAX_SCREENSHOT_IMPORT_IMAGES = 3;
 
 const RECOMMENDED_REST_BY_GOAL: Record<Goal, { label: string; min: number; max: number; defaultSeconds: number }> = {
   STRENGTH: { label: "3-5 minutes", min: 180, max: 300, defaultSeconds: 240 },
@@ -116,7 +135,6 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
   const [customName, setCustomName] = useState("");
   const [customMuscle, setCustomMuscle] = useState("OTHER");
   const [customMovement, setCustomMovement] = useState("ISOLATION");
-  const [showCustomBuilder, setShowCustomBuilder] = useState(false);
   const [step, setStep] = useState(0);
 
   const [saving, setSaving] = useState(false);
@@ -125,6 +143,11 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
   
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const [screenshotError, setScreenshotError] = useState<string | null>(null);
+  const [selectedScreenshotFiles, setSelectedScreenshotFiles] = useState<File[]>([]);
+  const [selectedScreenshotNames, setSelectedScreenshotNames] = useState<string[]>([]);
+  const screenshotInputRef = useRef<HTMLInputElement | null>(null);
+  const [buildStartMode, setBuildStartMode] = useState<"import" | "manual" | null>(null);
+  const [hasImportedScreenshots, setHasImportedScreenshots] = useState(false);
 
   useEffect(() => {
     if (mode !== "edit") return;
@@ -257,11 +280,28 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
     { title: "Choose your split", subtitle: "Select how you want your week structured." },
     { title: "Name your routine", subtitle: "Give your plan a simple name." },
     { title: "Calibration length", subtitle: "How many workouts before strong recommendations." },
+    { title: "How do you want to start?", subtitle: "Pick import or manual setup before building your workouts." },
+    { title: "Import screenshots", subtitle: "Upload and analyze your routine screenshots." },
     { title: "Build your workouts", subtitle: "Add exercises to each day." },
+  ] as const;
+
+  const stepGuidance = [
+    "Pick the goal that best matches what you want most in the next 8-12 weeks.",
+    "Be honest here so progression and recommendations feel right from week one.",
+    "Balanced works well for most people and is a safe default.",
+    "Choose the unit you use in the gym so logging feels natural.",
+    "Pick a split you can actually follow each week. Consistency beats perfect plans.",
+    "Use a simple routine name like 'PPL Spring' so it's easy to find later.",
+    "Calibration teaches the app your current level. 7 workouts is a strong default.",
+    "Choose import if you already have screenshots, or manual if you want to build from scratch.",
+    "Upload screenshots, run analysis, then continue to confirm and edit in the builder.",
+    "Each day needs at least one exercise before you can save.",
   ] as const;
 
   function canContinueCurrentStep() {
     if (step === 5) return routineName.trim().length >= 2;
+    if (step === BUILD_ENTRY_STEP) return buildStartMode !== null;
+    if (step === IMPORT_SCREENSHOT_STEP && buildStartMode === "import") return hasImportedScreenshots;
     return true;
   }
 
@@ -324,16 +364,64 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
     addExercise(data.exercise);
   }
 
-  async function handleScreenshotUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  function handleScreenshotUpload(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) return;
+
+    setScreenshotError(null);
+
+    setSelectedScreenshotFiles((previous) => {
+      const merged = [...previous];
+      for (const file of files) {
+        const exists = merged.some(
+          (candidate) =>
+            candidate.name === file.name &&
+            candidate.size === file.size &&
+            candidate.lastModified === file.lastModified,
+        );
+        if (!exists) {
+          merged.push(file);
+        }
+      }
+
+      if (merged.length > MAX_SCREENSHOT_IMPORT_IMAGES) {
+        setScreenshotError(`You can import up to ${MAX_SCREENSHOT_IMPORT_IMAGES} images.`);
+        return previous;
+      }
+
+      setSelectedScreenshotNames(merged.map((file) => file.name));
+      return merged;
+    });
+
+    event.target.value = "";
+  }
+
+  function clearSelectedScreenshots(options?: { preserveImported?: boolean }) {
+    setSelectedScreenshotFiles([]);
+    setSelectedScreenshotNames([]);
+    if (!options?.preserveImported) {
+      setHasImportedScreenshots(false);
+    }
+    setScreenshotError(null);
+    if (screenshotInputRef.current) {
+      screenshotInputRef.current.value = "";
+    }
+  }
+
+  async function importSelectedScreenshots() {
+    if (!selectedScreenshotFiles.length) {
+      setScreenshotError("Choose at least one screenshot to import.");
+      return;
+    }
 
     setUploadingScreenshot(true);
     setScreenshotError(null);
 
     try {
       const formData = new FormData();
-      formData.append("screenshot", file);
+      for (const file of selectedScreenshotFiles) {
+        formData.append("screenshot", file);
+      }
 
       const response = await fetch("/api/parse-split-screenshot", {
         method: "POST",
@@ -345,14 +433,12 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
         throw new Error(errorData.error || "Failed to parse screenshot");
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as ParsedScreenshotPayload;
 
-      // Map the parsed days to our routine structure
-      const parsedDays: RoutineDay[] = data.days.map((day: any) => ({
+      const parsedDays: RoutineDay[] = data.days.map((day) => ({
         label: day.label,
         exercises: day.exercises
-          .map((ex: any) => {
-            // Try to find matching exercise in catalog
+          .map((ex) => {
             const matchingExercise = exerciseCatalog.find(
               (catalogEx) =>
                 catalogEx.name.toLowerCase() === ex.name.toLowerCase() ||
@@ -374,18 +460,15 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
           .filter(Boolean) as RoutineExercise[],
       }));
 
-      // Update days with parsed data
       setDays(parsedDays);
       setActiveDayIndex(0);
-
-      // Show success message or notification
+      setHasImportedScreenshots(true);
       setError(null);
+      clearSelectedScreenshots({ preserveImported: true });
     } catch (err) {
       setScreenshotError(err instanceof Error ? err.message : "Failed to parse screenshot");
     } finally {
       setUploadingScreenshot(false);
-      // Reset file input
-      event.target.value = "";
     }
   }
 
@@ -429,8 +512,10 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
       <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">
         {mode === "new" ? "Add New Split" : "Edit Current Routine"}
       </p>
+      <p className="text-xs text-zinc-300/75">Step {step + 1} of {FINAL_STEP + 1}</p>
       <h1 className="text-3xl font-bold text-white">{stepMeta[step].title}</h1>
       <p className="text-sm text-zinc-200/75">{stepMeta[step].subtitle}</p>
+      <p className="text-xs text-zinc-300/75">{stepGuidance[step]}</p>
 
       <div className="glass-card overflow-hidden rounded-full">
         <div
@@ -558,32 +643,130 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
         </section>
       ) : null}
 
-      {step === FINAL_STEP ? (
-        <section className="glass-card space-y-3 rounded-2xl p-4">
-          <div className="rounded-xl border border-white/15 bg-white/5 p-3">
-            <p className="text-sm font-semibold text-zinc-100">📸 Import from Screenshot</p>
-            <p className="mt-1 text-xs text-zinc-300/75">Upload a screenshot of your workout split and we'll auto-populate your exercises</p>
-            
-            <label className="mt-3 block">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleScreenshotUpload}
-                disabled={uploadingScreenshot}
-                className="hidden"
-                id="screenshot-upload"
-              />
-              <span className="glass-button block cursor-pointer py-2 text-center text-sm">
-                {uploadingScreenshot ? "Analyzing..." : "Choose Screenshot"}
+      {step === BUILD_ENTRY_STEP ? (
+        <section className="glass-card space-y-2 rounded-2xl p-4">
+          <div className="mb-1">
+            <p className="text-xs uppercase tracking-[0.12em] text-zinc-300/70">Choose one option</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setBuildStartMode("import");
+              setStep(IMPORT_SCREENSHOT_STEP);
+            }}
+            className={`w-full rounded-2xl border px-4 py-4 text-left transition ${
+              buildStartMode === "import"
+                ? "border-white/45 bg-white/18"
+                : "border-white/12 bg-white/6 hover:border-white/25 hover:bg-white/10"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-base font-semibold text-white">Import from screenshots</p>
+                <p className="mt-1 text-xs text-zinc-300/80">Use up to 3 images to auto-fill your workout days.</p>
+              </div>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${buildStartMode === "import" ? "bg-white/20 text-white" : "bg-white/10 text-zinc-300/90"}`}>
+                Fastest
               </span>
-            </label>
-            
-            {screenshotError && (
-              <p className="mt-2 text-xs text-red-300">{screenshotError}</p>
-            )}
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setBuildStartMode("manual");
+              setStep(FINAL_STEP);
+            }}
+            className={`w-full rounded-2xl border px-4 py-4 text-left transition ${
+              buildStartMode === "manual"
+                ? "border-white/45 bg-white/18"
+                : "border-white/12 bg-white/6 hover:border-white/25 hover:bg-white/10"
+            }`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-base font-semibold text-white">Continue to build manually</p>
+                <p className="mt-1 text-xs text-zinc-300/80">Search and add exercises day by day yourself.</p>
+              </div>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${buildStartMode === "manual" ? "bg-white/20 text-white" : "bg-white/10 text-zinc-300/90"}`}>
+                Flexible
+              </span>
+            </div>
+          </button>
+        </section>
+      ) : null}
+
+      {step === IMPORT_SCREENSHOT_STEP ? (
+        <section className="glass-card space-y-3 rounded-2xl p-4">
+          <div>
+            <p className="text-sm font-semibold text-zinc-100">Upload screenshots</p>
+            <p className="mt-1 text-xs text-zinc-300/75">Add 1-3 screenshots, run analysis, then continue to the builder.</p>
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          {selectedScreenshotNames.length > 0 ? (
+            <div className="rounded-lg border border-white/12 bg-black/20 p-2">
+              <p className="text-xs font-semibold text-zinc-200/85">{selectedScreenshotNames.length} image{selectedScreenshotNames.length === 1 ? "" : "s"} selected</p>
+              <div className="mt-1 space-y-0.5 text-xs text-zinc-300/80">
+                {selectedScreenshotNames.map((name) => (
+                  <p key={name}>{name}</p>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <label className="block">
+            <input
+              ref={screenshotInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleScreenshotUpload}
+              disabled={uploadingScreenshot}
+              className="hidden"
+              id="screenshot-upload"
+            />
+            <span className="glass-button block cursor-pointer py-2 text-center text-sm">Choose Screenshots</span>
+          </label>
+
+          <p className="text-[11px] text-zinc-400/90">Tip: select multiple at once (Shift/Cmd) or add them in separate picks.</p>
+
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={importSelectedScreenshots}
+              disabled={uploadingScreenshot || selectedScreenshotFiles.length === 0}
+              className="glass-button py-2 text-sm disabled:opacity-50"
+            >
+              {uploadingScreenshot ? "Analyzing..." : "Import Selected"}
+            </button>
+            <button
+              type="button"
+              onClick={clearSelectedScreenshots}
+              disabled={uploadingScreenshot || selectedScreenshotFiles.length === 0}
+              className="glass-button-ghost py-2 text-sm disabled:opacity-50"
+            >
+              Clear
+            </button>
+          </div>
+
+          {hasImportedScreenshots ? (
+            <div className="rounded-lg border border-emerald-300/25 bg-emerald-500/10 p-2 text-xs text-emerald-100">
+              Import complete. Continue to the build page to confirm and edit.
+            </div>
+          ) : null}
+
+          {screenshotError ? <p className="text-xs text-red-300">{screenshotError}</p> : null}
+        </section>
+      ) : null}
+
+      {step === FINAL_STEP ? (
+        <section className="glass-card space-y-4 rounded-2xl p-4">
+          <div>
+            <p className="text-sm font-semibold text-zinc-100">Build your week</p>
+            <p className="mt-1 text-xs text-zinc-300/80">Pick a day, add exercises, then set sets and rep ranges.</p>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto">
             {days.map((day, i) => (
               <button
                 key={`${day.label}-${i}`}
@@ -596,85 +779,80 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
             ))}
           </div>
 
-          <div className="relative">
-            <input placeholder="Search exercises" value={query} onChange={(e) => setQuery(e.target.value)} className="glass-input" />
-            {(loadingSearch || query.trim().length > 0) && (
-              <div className="absolute z-10 mt-2 max-h-60 w-full overflow-y-auto rounded-xl border border-white/15 bg-zinc-950/95 p-1 shadow-xl backdrop-blur">
-                {loadingSearch ? <p className="px-3 py-2 text-xs text-zinc-300/70">Searching...</p> : null}
-                {!loadingSearch && results.length === 0 ? <p className="px-3 py-2 text-xs text-zinc-300/70">No matches found.</p> : null}
-                {!loadingSearch
-                  ? results.slice(0, 8).map((exercise) => (
-                      <button
-                        key={exercise.id}
-                        type="button"
-                        onClick={() => addExercise(exercise)}
-                        className="block w-full rounded-lg px-3 py-2 text-left transition hover:bg-white/10"
-                      >
-                        <p className="text-sm font-medium text-white">{exercise.name}</p>
-                        <p className="text-xs text-zinc-300/70">{labelize(exercise.muscleGroup)} • {labelize(exercise.movementType)}</p>
-                      </button>
-                    ))
-                  : null}
-              </div>
-            )}
-          </div>
-
-          <div className="glass-card rounded-xl p-3">
-            <p className="text-sm font-semibold">Recommended for {activeDay?.label}</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {activeRecommendations.slice(0, 10).map((exercise) => {
-                const isAdded = !!activeDay?.exercises.some((x) => x.exerciseId === exercise.id);
-
-                return (
-                  <button
-                    key={exercise.id}
-                    type="button"
-                    onClick={() => addExercise(exercise)}
-                    disabled={isAdded}
-                    className={`rounded-full px-3 py-1.5 text-xs transition ${isAdded ? "bg-white/10 text-zinc-400" : "bg-white/15 text-zinc-100 hover:bg-white/25"}`}
-                  >
-                    {exercise.name}
-                  </button>
-                );
-              })}
-              {activeRecommendations.length === 0 ? <p className="text-xs text-zinc-300/70">No day suggestions yet.</p> : null}
-            </div>
-          </div>
-
-          <div className="glass-card rounded-xl p-3">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold">Custom exercise</p>
-              <button type="button" onClick={() => setShowCustomBuilder((prev) => !prev)} className="text-xs text-zinc-300/80">
-                {showCustomBuilder ? "Hide" : "Add custom"}
-              </button>
-            </div>
-
-            {showCustomBuilder ? (
-              <div className="mt-2 space-y-2">
-                <input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="Exercise name" className="glass-input" />
-                <div className="grid grid-cols-2 gap-2">
-                  <select value={customMuscle} onChange={(e) => setCustomMuscle(e.target.value)} className="glass-input text-sm">
-                    {["CHEST", "BACK", "SHOULDERS", "BICEPS", "TRICEPS", "QUADS", "HAMSTRINGS", "GLUTES", "CALVES", "CORE", "FULL_BODY", "OTHER"].map((m) => (
-                      <option key={m} value={m}>{labelize(m)}</option>
-                    ))}
-                  </select>
-                  <select value={customMovement} onChange={(e) => setCustomMovement(e.target.value)} className="glass-input text-sm">
-                    <option value="COMPOUND">Compound</option>
-                    <option value="ISOLATION">Isolation</option>
-                  </select>
+          <div className="space-y-3">
+            <div className="relative">
+              <input placeholder="Search exercises" value={query} onChange={(e) => setQuery(e.target.value)} className="glass-input" />
+              {(loadingSearch || query.trim().length > 0) && (
+                <div className="absolute z-10 mt-2 max-h-60 w-full overflow-y-auto rounded-xl border border-white/15 bg-zinc-950/95 p-1 shadow-xl backdrop-blur">
+                  {loadingSearch ? <p className="px-3 py-2 text-xs text-zinc-300/70">Searching...</p> : null}
+                  {!loadingSearch && results.length === 0 ? <p className="px-3 py-2 text-xs text-zinc-300/70">No matches found.</p> : null}
+                  {!loadingSearch
+                    ? results.slice(0, 8).map((exercise) => (
+                        <button
+                          key={exercise.id}
+                          type="button"
+                          onClick={() => addExercise(exercise)}
+                          className="block w-full rounded-lg px-3 py-2 text-left transition hover:bg-white/10"
+                        >
+                          <p className="text-sm font-medium text-white">{exercise.name}</p>
+                          <p className="text-xs text-zinc-300/70">{labelize(exercise.muscleGroup)} • {labelize(exercise.movementType)}</p>
+                        </button>
+                      ))
+                    : null}
                 </div>
-                <button type="button" onClick={createCustomExercise} className="glass-button text-sm">Create + Add</button>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-white/12 bg-white/5 p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-300/75">Recommended for {activeDay?.label}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {activeRecommendations.slice(0, 10).map((exercise) => {
+                  const isAdded = !!activeDay?.exercises.some((x) => x.exerciseId === exercise.id);
+
+                  return (
+                    <button
+                      key={exercise.id}
+                      type="button"
+                      onClick={() => addExercise(exercise)}
+                      disabled={isAdded}
+                      className={`rounded-full px-3 py-1.5 text-xs transition ${isAdded ? "bg-white/10 text-zinc-400" : "bg-white/15 text-zinc-100 hover:bg-white/25"}`}
+                    >
+                      {exercise.name}
+                    </button>
+                  );
+                })}
+                {activeRecommendations.length === 0 ? <p className="text-xs text-zinc-300/70">No day suggestions yet.</p> : null}
               </div>
-            ) : null}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <p className="text-sm font-semibold">{activeDay?.label} exercises</p>
+          <details className="rounded-xl border border-white/12 bg-white/5 p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-zinc-100">Add custom exercise</summary>
+            <div className="mt-2 space-y-2">
+              <input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="Exercise name" className="glass-input" />
+              <div className="grid grid-cols-2 gap-2">
+                <select value={customMuscle} onChange={(e) => setCustomMuscle(e.target.value)} className="glass-input text-sm">
+                  {["CHEST", "BACK", "SHOULDERS", "BICEPS", "TRICEPS", "QUADS", "HAMSTRINGS", "GLUTES", "CALVES", "CORE", "FULL_BODY", "OTHER"].map((m) => (
+                    <option key={m} value={m}>{labelize(m)}</option>
+                  ))}
+                </select>
+                <select value={customMovement} onChange={(e) => setCustomMovement(e.target.value)} className="glass-input text-sm">
+                  <option value="COMPOUND">Compound</option>
+                  <option value="ISOLATION">Isolation</option>
+                </select>
+              </div>
+              <button type="button" onClick={createCustomExercise} className="glass-button text-sm">Create + Add</button>
+            </div>
+          </details>
+
+          <div className="space-y-2 rounded-xl border border-white/12 bg-white/5 p-3">
+            <p className="text-sm font-semibold text-zinc-100">{activeDay?.label} exercises</p>
+            <p className="text-xs text-zinc-300/75">{activeDay?.exercises.length ?? 0} added</p>
             {activeDay?.exercises.length ? (
               activeDay.exercises.map((item) => (
-                <div key={item.exerciseId} className="glass-card rounded-xl p-3">
+                <div key={item.exerciseId} className="rounded-lg border border-white/10 bg-black/20 p-3">
                   <div className="mb-2 flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium">{item.name}</p>
+                    <p className="text-sm font-medium text-zinc-100">{item.name}</p>
                     <button type="button" onClick={() => removeExercise(activeDayIndex, item.exerciseId)} className="text-xs text-zinc-300/80">Remove</button>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs">
@@ -708,7 +886,7 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
 
         {step < FINAL_STEP ? (
           <button type="button" onClick={nextStep} className="glass-button" disabled={!canContinueCurrentStep()}>
-            Continue
+            {step === IMPORT_SCREENSHOT_STEP ? "Continue to Build Page" : "Continue"}
           </button>
         ) : (
           <button disabled={saving} className="glass-button disabled:opacity-50">

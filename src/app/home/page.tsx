@@ -61,7 +61,6 @@ export default async function HomePage() {
     },
   });
 
-  const routineDays = routine?.days?.length ?? 0;
   const calibrationProgress = `${Math.min(user.workoutsCompletedInCalibration, user.calibrationLength)}/${user.calibrationLength}`;
 
   return (
@@ -69,7 +68,27 @@ export default async function HomePage() {
       <header className="mb-3">
         <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">LiftDiary</p>
         <h1 className="text-3xl font-bold text-white">Train hard today</h1>
+        <p className="mt-1 text-sm text-zinc-200/75">Pick a planned day, log each set, and review your progress after every session.</p>
       </header>
+
+      {streak === 0 ? (
+        <section className="glass-card mb-4 rounded-2xl p-3">
+          <p className="text-xs uppercase tracking-[0.14em] text-zinc-300/70">New Here? Start in 3 Steps</p>
+          <ol className="mt-1.5 list-decimal space-y-1 pl-5 text-sm text-zinc-100/90">
+            <li>Open Today Plan and pick your workout day.</li>
+            <li>Log each set during your session.</li>
+            <li>Check History and Progress after you finish.</li>
+          </ol>
+          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+            <Link href="/workout/start" className="glass-pill px-3 py-1 text-zinc-100">
+              Start Workout
+            </Link>
+            <Link href="/history" className="glass-pill px-3 py-1 text-zinc-200/90">
+              View History
+            </Link>
+          </div>
+        </section>
+      ) : null}
 
       <HomeTodayPlanClient
         defaultDayId={nextDayId}
@@ -112,7 +131,7 @@ export default async function HomePage() {
             </p>
           </div>
         ) : (
-          <p className="mt-1.5 text-sm text-zinc-300/75">No sessions logged yet. Start your first workout now.</p>
+          <p className="mt-1.5 text-sm text-zinc-300/75">No sessions logged yet. Tap Start Workout to begin and this section will show your latest result.</p>
         )}
 
         <div className="mt-2 grid grid-cols-2 gap-2">

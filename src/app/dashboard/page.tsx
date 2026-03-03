@@ -46,10 +46,14 @@ export default async function DashboardPage() {
 
   return (
     <ScreenShell>
-      <h1 className="mb-3 text-3xl font-bold text-white">PR Dashboard</h1>
+      <h1 className="mb-2 text-3xl font-bold text-white">Progress Dashboard</h1>
+      <p className="mb-3 text-sm text-zinc-200/75">
+        Track your strongest sets over time. Estimated 1RM is a projection based on your logged weight and reps.
+      </p>
 
       <section className="glass-card mb-3 rounded-2xl p-4">
-        <h2 className="mb-2 text-sm font-semibold text-zinc-200/85">Major Lift Estimated 1RM</h2>
+        <h2 className="mb-1 text-sm font-semibold text-zinc-200/85">Major Lift Estimated 1RM</h2>
+        <p className="mb-2 text-xs text-zinc-300/75">If a value is blank, log at least one set for that lift first.</p>
         <div className="grid grid-cols-2 gap-2 text-sm">
           {majorLiftNames.map((lift) => {
             const found = exerciseRows.find((row) => row.name === lift);
@@ -64,7 +68,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="space-y-3 pb-24">
-        {exerciseRows.length === 0 ? <p className="text-sm text-zinc-200/70">Log sessions to unlock PR insights.</p> : null}
+        {exerciseRows.length === 0 ? <p className="text-sm text-zinc-200/70">No progress data yet. Start a workout and log sets to unlock charts.</p> : null}
 
         {majorRows.length > 0 ? (
           <article className="glass-card rounded-2xl p-4">
