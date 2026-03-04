@@ -741,7 +741,7 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
             </button>
             <button
               type="button"
-              onClick={clearSelectedScreenshots}
+              onClick={() => clearSelectedScreenshots()}
               disabled={uploadingScreenshot || selectedScreenshotFiles.length === 0}
               className="glass-button-ghost py-2 text-sm disabled:opacity-50"
             >
