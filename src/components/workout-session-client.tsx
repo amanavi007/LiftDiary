@@ -302,7 +302,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
           exerciseId: activeExerciseDisplay?.id ?? exerciseId,
           setIndex: nextSetIndex,
           weight: values.weight,
-          reps: values.reps,
+           reps: values.reps,
           isFailed: values.isFailed,
         }),
       });

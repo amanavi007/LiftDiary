@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LiftDiary",
   description: "Mobile-first workout assistant with hybrid ML recommendations",
+  icons: {
+    icon: "/liftdiarylogo.png",
+  },
 };
 
 export const viewport: Viewport = {
