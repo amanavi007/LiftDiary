@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: "LiftDiary",
   description: "Mobile-first workout assistant with hybrid ML recommendations",
   icons: {
-    icon: "/liftdiarylogo.png",
-    apple: "/liftdiarylogo.png",
+    icon: "/logo.png",
+    apple: "/logo.png",
   },
 };
 
