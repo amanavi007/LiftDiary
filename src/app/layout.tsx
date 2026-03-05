@@ -17,6 +17,7 @@ export const metadata: Metadata = {
   description: "Mobile-first workout assistant with hybrid ML recommendations",
   icons: {
     icon: "/liftdiarylogo.png",
+    apple: "/liftdiarylogo.png",
   },
 };
 
