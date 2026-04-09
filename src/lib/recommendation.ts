@@ -82,6 +82,7 @@ function fitLinearRegression(features: number[][], targets: number[], iterations
 
     for (let j = 0; j < nFeatures; j += 1) {
       weights[j] -= lr * gradients[j];
+      if (!isFinite(weights[j])) return null; // Gradient exploded — bail out
     }
   }
 

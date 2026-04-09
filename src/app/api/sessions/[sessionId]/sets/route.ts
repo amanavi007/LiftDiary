@@ -6,8 +6,8 @@ import { requireApiUserId } from "@/lib/server-auth";
 const schema = z.object({
   exerciseId: z.string().min(1),
   setIndex: z.number().int().min(1).max(20),
-  weight: z.number().min(0),
-  reps: z.number().int().min(0).max(50),
+  weight: z.number().min(0).max(1000),
+  reps: z.number().int().min(1).max(50),
   isFailed: z.boolean().default(false),
 });
 
@@ -22,12 +22,24 @@ export async function POST(request: Request, context: { params: Promise<{ sessio
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
+  // Verify session exists and the exercise belongs to its routine day
   const session = await prisma.workoutSession.findFirst({
     where: { id: sessionId, userId: auth },
+    include: {
+      routineDay: {
+        include: {
+          exercises: { where: { exerciseId: parsed.data.exerciseId } },
+        },
+      },
+    },
   });
 
   if (!session) {
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
+  }
+
+  if (session.routineDay.exercises.length === 0) {
+    return NextResponse.json({ error: "Exercise not in this routine" }, { status: 400 });
   }
 
   const set = await prisma.setEntry.create({

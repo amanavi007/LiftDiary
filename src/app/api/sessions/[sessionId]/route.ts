@@ -31,29 +31,33 @@ export async function GET(_: Request, context: { params: Promise<{ sessionId: st
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 
+  const exerciseIds = session.routineDay.exercises.map((rde) => rde.exerciseId);
+
+  // Single query for all exercise history instead of one per exercise (fixes N+1)
+  const allHistory = await prisma.workoutSession.findMany({
+    where: {
+      userId: auth,
+      sets: { some: { exerciseId: { in: exerciseIds } } },
+      endedAt: { not: null },
+    },
+    include: {
+      sets: {
+        where: { exerciseId: { in: exerciseIds } },
+      },
+    },
+    orderBy: { startedAt: "asc" },
+  });
+
   const exercisesWithRecommendations = [];
 
   for (const rde of session.routineDay.exercises) {
-    const history = await prisma.workoutSession.findMany({
-      where: {
-        userId: auth,
-        sets: {
-          some: {
-            exerciseId: rde.exerciseId,
-          },
-        },
-        endedAt: { not: null },
-      },
-      include: {
-        sets: {
-          where: {
-            exerciseId: rde.exerciseId,
-          },
-        },
-      },
-      orderBy: { startedAt: "asc" },
-      take: 12,
-    });
+    const history = allHistory
+      .filter((s) => s.sets.some((set) => set.exerciseId === rde.exerciseId))
+      .slice(-12)
+      .map((s) => ({
+        ...s,
+        sets: s.sets.filter((set) => set.exerciseId === rde.exerciseId),
+      }));
 
     const recommendation = buildRecommendation({
       sessions: history,
@@ -111,38 +115,39 @@ export async function PATCH(request: Request, context: { params: Promise<{ sessi
   const { sessionId } = await context.params;
   const body = await request.json().catch(() => ({}));
 
-  const session = await prisma.workoutSession.findFirst({
-    where: { id: sessionId, userId: auth },
+  const result = await prisma.$transaction(async (tx) => {
+    const session = await tx.workoutSession.findFirst({
+      where: { id: sessionId, userId: auth },
+    });
+
+    if (!session) return null;
+
+    // Already completed — return as-is to prevent double-counting
+    if (session.endedAt) return { session, alreadyEnded: true };
+
+    const updated = await tx.workoutSession.update({
+      where: { id: session.id },
+      data: { endedAt: body.endedAt ? new Date(body.endedAt) : new Date() },
+    });
+
+    const user = await tx.user.findUnique({ where: { id: auth } });
+    if (user) {
+      const workoutsCompletedInCalibration = user.workoutsCompletedInCalibration + 1;
+      await tx.user.update({
+        where: { id: auth },
+        data: {
+          workoutsCompletedInCalibration,
+          calibrationComplete: workoutsCompletedInCalibration >= user.calibrationLength,
+        },
+      });
+    }
+
+    return { session: updated, alreadyEnded: false };
   });
 
-  if (!session) {
+  if (!result) {
     return NextResponse.json({ error: "Session not found" }, { status: 404 });
   }
 
-  const updated = await prisma.workoutSession.update({
-    where: { id: session.id },
-    data: {
-      endedAt: body.endedAt ? new Date(body.endedAt) : new Date(),
-    },
-  });
-
-  const user = await prisma.user.findUnique({ where: { id: auth } });
-  if (user && !updated.endedAt) {
-    return NextResponse.json({ session: updated });
-  }
-
-  if (user && updated.endedAt) {
-    const workoutsCompletedInCalibration = user.workoutsCompletedInCalibration + 1;
-    const calibrationComplete = workoutsCompletedInCalibration >= user.calibrationLength;
-
-    await prisma.user.update({
-      where: { id: auth },
-      data: {
-        workoutsCompletedInCalibration,
-        calibrationComplete,
-      },
-    });
-  }
-
-  return NextResponse.json({ session: updated });
+  return NextResponse.json({ session: result.session });
 }

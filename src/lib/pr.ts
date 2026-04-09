@@ -8,7 +8,10 @@ export function estimated1RM(weight: number, reps: number): number {
 export function roundWeight(weight: number, units: "LB" | "KG") {
   const step = units === "LB" ? 2.5 : 1.25;
   if (weight <= 0) return 0;
-  return Math.round(weight / step) * step;
+  // Use integer arithmetic to avoid floating point accumulation errors
+  const stepMillis = Math.round(step * 1000);
+  const weightMillis = Math.round(weight * 1000);
+  return (Math.round(weightMillis / stepMillis) * stepMillis) / 1000;
 }
 
 export function summarizeExercisePRs(sets: SetEntry[]) {

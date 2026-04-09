@@ -157,6 +157,7 @@ model WorkoutSession {
   sets                 SetEntry[]
 
   @@index([userId, startedAt])
+  @@index([routineDayId])
 }
 
 model SetEntry {
@@ -173,6 +174,7 @@ model SetEntry {
 
   @@index([exerciseId, timestamp])
   @@index([sessionId, exerciseId])
+  @@index([sessionId])
 }
 
 model Recommendation {

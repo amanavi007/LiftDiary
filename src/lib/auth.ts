@@ -53,7 +53,11 @@ export async function getSessionUserId() {
   try {
     const result = await jwtVerify(token, getSecret());
     return result.payload.sub ?? null;
-  } catch {
+  } catch (error) {
+    // Clear the cookie if the token is expired so the user gets redirected to login
+    if (error instanceof Error && error.message.includes("expired")) {
+      await clearSession();
+    }
     return null;
   }
 }
@@ -62,26 +66,31 @@ export async function getCurrentUser() {
   const userId = await getSessionUserId();
   if (!userId) return null;
 
-  return prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      routines: {
-        include: {
-          days: {
-            include: {
-              exercises: {
-                include: { exercise: true },
-                orderBy: { orderIndex: "asc" },
+  try {
+    return await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        routines: {
+          include: {
+            days: {
+              include: {
+                exercises: {
+                  include: { exercise: true },
+                  orderBy: { orderIndex: "asc" },
+                },
               },
+              orderBy: { dayIndex: "asc" },
             },
-            orderBy: { dayIndex: "asc" },
           },
+          orderBy: { createdAt: "desc" },
+          take: 1,
         },
-        orderBy: { createdAt: "desc" },
-        take: 1,
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Failed to fetch current user:", error);
+    return null;
+  }
 }
 
 export async function requireUser() {

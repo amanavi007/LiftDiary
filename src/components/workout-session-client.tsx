@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { jsonFetch } from "@/lib/client";
 
 type LoggedSet = {
@@ -121,7 +121,11 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
   const [swapModeForExerciseId, setSwapModeForExerciseId] = useState<string | null>(null);
   const [swapQuery, setSwapQuery] = useState("");
 
-  useEffect(() => {
+  const catalogLoadedRef = useRef(false);
+
+  function loadExerciseCatalog() {
+    if (catalogLoadedRef.current) return;
+    catalogLoadedRef.current = true;
     jsonFetch<{ exercises: Array<{ id: string; name: string; defaultRestSec?: number }> }>("/api/exercises")
       .then((data) => {
         setExerciseCatalog(
@@ -133,7 +137,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
         );
       })
       .catch(() => setExerciseCatalog([]));
-  }, []);
+  }
 
   useEffect(() => {
     async function loadSession() {
@@ -185,7 +189,11 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
   useEffect(() => {
     if (!activeRestExercise || restSecondsLeft <= 0) return;
     const id = setInterval(() => {
-      setRestSecondsLeft((seconds) => Math.max(0, seconds - 1));
+      setRestSecondsLeft((seconds) => {
+        const next = Math.max(0, seconds - 1);
+        if (next === 0) setActiveRestExercise(null);
+        return next;
+      });
     }, 1000);
 
     return () => clearInterval(id);
@@ -574,6 +582,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
                   <button
                     type="button"
                     onClick={() => {
+                      loadExerciseCatalog();
                       setSwapModeForExerciseId(item.exercise.id);
                       setSwapQuery("");
                     }}
