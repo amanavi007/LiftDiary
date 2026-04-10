@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ScreenShell } from "@/components/screen-shell";
 import { PRChart } from "@/components/pr-chart";
 import { estimated1RM } from "@/lib/pr";
@@ -60,7 +61,9 @@ export default async function DashboardPage() {
             return (
               <div key={lift} className="glass-card rounded-xl p-2">
                 <p className="text-xs text-zinc-200/70">{lift}</p>
-                <p className="font-semibold">{found ? found.bestE1RM.toFixed(1) : "—"}</p>
+                <p className="font-semibold text-white">
+                  {found ? `${found.bestE1RM.toFixed(1)} ${user.units.toLowerCase()}` : "—"}
+                </p>
               </div>
             );
           })}
@@ -68,7 +71,14 @@ export default async function DashboardPage() {
       </section>
 
       <section className="space-y-3 pb-24">
-        {exerciseRows.length === 0 ? <p className="text-sm text-zinc-200/70">No progress data yet. Start a workout and log sets to unlock charts.</p> : null}
+        {exerciseRows.length === 0 ? (
+          <div className="glass-card rounded-2xl p-4 text-sm text-zinc-200/80">
+            <p>No progress data yet. Log sets during a workout and your charts will appear here.</p>
+            <Link href="/home" className="glass-pill mt-3 inline-block px-3 py-1 text-xs text-zinc-100">
+              Start a Workout →
+            </Link>
+          </div>
+        ) : null}
 
         {majorRows.length > 0 ? (
           <article className="glass-card rounded-2xl p-4">
@@ -78,7 +88,7 @@ export default async function DashboardPage() {
                 <details key={row.name} className="rounded-xl border border-white/12 bg-white/6 p-3" open>
                   <summary className="cursor-pointer list-none">
                     <p className="font-semibold text-white">{row.name}</p>
-                    <p className="text-xs text-zinc-200/70">Best weight: {row.bestWeight} • Best e1RM: {row.bestE1RM.toFixed(1)} • Volume PR: {row.bestVolume.toFixed(0)}</p>
+                    <p className="text-xs text-zinc-200/70">Best weight: {row.bestWeight} {user.units.toLowerCase()} • e1RM: {row.bestE1RM.toFixed(1)} {user.units.toLowerCase()} • Volume PR: {row.bestVolume.toFixed(0)}</p>
                   </summary>
                   <div className="mt-2">
                     <PRChart data={row.trend} />
@@ -97,7 +107,7 @@ export default async function DashboardPage() {
                 <details key={row.name} className="rounded-xl border border-white/12 bg-white/6 p-3">
                   <summary className="cursor-pointer list-none">
                     <p className="font-semibold text-white">{row.name}</p>
-                    <p className="text-xs text-zinc-200/70">Best weight: {row.bestWeight} • Best e1RM: {row.bestE1RM.toFixed(1)} • Volume PR: {row.bestVolume.toFixed(0)}</p>
+                    <p className="text-xs text-zinc-200/70">Best weight: {row.bestWeight} {user.units.toLowerCase()} • e1RM: {row.bestE1RM.toFixed(1)} {user.units.toLowerCase()} • Volume PR: {row.bestVolume.toFixed(0)}</p>
                   </summary>
                   <div className="mt-2">
                     <PRChart data={row.trend} />

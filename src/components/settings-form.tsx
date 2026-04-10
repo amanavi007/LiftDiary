@@ -28,14 +28,18 @@ export function SettingsForm({
   const [preferredRestSeconds, setPreferredRestSeconds] = useState(initial.preferredRestSeconds ?? 120);
   const [calibrationLength, setCalibrationLength] = useState(initial.calibrationLength);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   async function save() {
     setSaving(true);
+    setSaved(false);
     try {
       await jsonFetch("/api/settings", {
         method: "PATCH",
         body: JSON.stringify({ units, coachingStyle, goal, preferredRestSeconds, calibrationLength }),
       });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
       router.refresh();
     } finally {
       setSaving(false);
@@ -67,6 +71,11 @@ export function SettingsForm({
             <option key={style} value={style}>{labelize(style)}</option>
           ))}
         </select>
+        <p className="mt-1 text-xs text-zinc-400/75">
+          {coachingStyle === "CONSERVATIVE" && "Small, safe weight jumps. Prioritizes form and longevity."}
+          {coachingStyle === "BALANCED" && "Steady weekly progress. Works well for most people."}
+          {coachingStyle === "AGGRESSIVE" && "Bigger jumps, higher intensity. Push your limits."}
+        </p>
       </label>
 
       <label className="block text-sm">
@@ -84,13 +93,17 @@ export function SettingsForm({
       </label>
 
       <label className="block text-sm">
-        Calibration Length: {calibrationLength}
+        Calibration Length: <span className="font-semibold text-white">{calibrationLength} workouts</span>
+        <p className="mt-0.5 text-xs text-zinc-400/75">
+          {calibrationLength <= 5 ? "Quick — early recommendations with less data." : calibrationLength <= 10 ? "Recommended — good balance of speed and accuracy." : "Thorough — slower start, highly personalised results."}
+        </p>
         <input type="range" min={3} max={20} value={calibrationLength} onChange={(e) => setCalibrationLength(Number(e.target.value))} className="glass-slider mt-2" />
       </label>
 
       <button onClick={save} disabled={saving} className="glass-button">
-        {saving ? "Saving..." : "Save Settings"}
+        {saving ? "Saving..." : saved ? "Saved ✓" : "Save Settings"}
       </button>
+      {saved ? <p className="text-xs text-emerald-300/80">Settings updated successfully.</p> : null}
 
       <Link href="/onboarding?mode=edit" className="glass-button-ghost block text-center text-sm">
         Edit Current Routine

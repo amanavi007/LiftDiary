@@ -73,6 +73,33 @@ const GOALS: Goal[] = ["STRENGTH", "HYPERTROPHY", "ENDURANCE", "GENERAL_FITNESS"
 const EXPERIENCES: ExperienceLevel[] = ["BEGINNER", "INTERMEDIATE", "ADVANCED"];
 const STYLES: CoachingStyle[] = ["CONSERVATIVE", "BALANCED", "AGGRESSIVE"];
 const SPLITS: SplitType[] = ["PUSH_PULL_LEGS", "UPPER_LOWER", "FULL_BODY", "BRO_SPLIT", "CUSTOM"];
+
+const GOAL_DESCRIPTIONS: Record<Goal, string> = {
+  STRENGTH: "Low reps (3–6), heavy weight. Build raw power on compound lifts.",
+  HYPERTROPHY: "Moderate reps (8–12), controlled tempo. Maximize muscle size.",
+  ENDURANCE: "High reps (12–20+), lighter weight. Improve stamina and conditioning.",
+  GENERAL_FITNESS: "Balanced reps (6–12). Stay fit, look good, feel good.",
+};
+
+const EXPERIENCE_DESCRIPTIONS: Record<ExperienceLevel, string> = {
+  BEGINNER: "Under 1 year of consistent training. Faster progression expected.",
+  INTERMEDIATE: "1–3 years lifting. Steady weekly progress.",
+  ADVANCED: "3+ years. Slower gains — precise programming matters most.",
+};
+
+const STYLE_DESCRIPTIONS: Record<CoachingStyle, string> = {
+  CONSERVATIVE: "Small, safe weight jumps. Prioritizes form and longevity.",
+  BALANCED: "Steady weekly progress. Works well for most people.",
+  AGGRESSIVE: "Push limits with bigger jumps. Higher intensity, higher reward.",
+};
+
+const SPLIT_DESCRIPTIONS: Record<SplitType, string> = {
+  PUSH_PULL_LEGS: "6 days/week. Push (chest/shoulders/triceps), Pull (back/biceps), Legs.",
+  UPPER_LOWER: "4 days/week. Alternates upper and lower body. Great for strength.",
+  FULL_BODY: "3–4 days/week. Every session hits everything. Ideal for beginners.",
+  BRO_SPLIT: "5–6 days/week. One muscle group per day. Classic bodybuilding.",
+  CUSTOM: "You pick the days and muscles. Full control.",
+};
 const BUILD_ENTRY_STEP = 7;
 const IMPORT_SCREENSHOT_STEP = 8;
 const FINAL_STEP = 9;
@@ -512,17 +539,18 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
       <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">
         {mode === "new" ? "Add New Split" : "Edit Current Routine"}
       </p>
-      <p className="text-xs text-zinc-300/75">Step {step + 1} of {FINAL_STEP + 1}</p>
-      <h1 className="text-3xl font-bold text-white">{stepMeta[step].title}</h1>
-      <p className="text-sm text-zinc-200/75">{stepMeta[step].subtitle}</p>
-      <p className="text-xs text-zinc-300/75">{stepGuidance[step]}</p>
-
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-zinc-300/75">Step {step + 1} of {FINAL_STEP + 1}</p>
+        <p className="text-xs text-zinc-300/50">{Math.round(((step + 1) / (FINAL_STEP + 1)) * 100)}%</p>
+      </div>
       <div className="glass-card overflow-hidden rounded-full">
         <div
-          className="h-2 bg-gradient-to-r from-red-700 to-orange-500 transition-all duration-300"
+          className="h-1.5 bg-gradient-to-r from-red-700 to-orange-500 transition-all duration-300"
           style={{ width: `${((step + 1) / (FINAL_STEP + 1)) * 100}%` }}
         />
       </div>
+      <h1 className="text-3xl font-bold text-white">{stepMeta[step].title}</h1>
+      <p className="text-sm text-zinc-200/75">{stepGuidance[step]}</p>
 
       {step === 0 ? (
         <section className="glass-card space-y-2 rounded-2xl p-4">
@@ -533,10 +561,12 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
               onClick={() => {
                 setGoal(option);
                 setPreferredRestSeconds(RECOMMENDED_REST_BY_GOAL[option].defaultSeconds);
+                setTimeout(nextStep, 180);
               }}
-              className={`w-full rounded-xl px-3 py-3 text-left ${goal === option ? "bg-white/20" : "bg-white/8"}`}
+              className={`w-full rounded-xl px-3 py-3 text-left transition ${goal === option ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}
             >
-              {labelize(option)}
+              <p className="font-medium text-white">{labelize(option)}</p>
+              <p className="mt-0.5 text-xs text-zinc-300/70">{GOAL_DESCRIPTIONS[option]}</p>
             </button>
           ))}
 
@@ -570,10 +600,11 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
             <button
               key={option}
               type="button"
-              onClick={() => setExperienceLevel(option)}
-              className={`w-full rounded-xl px-3 py-3 text-left ${experienceLevel === option ? "bg-white/20" : "bg-white/8"}`}
+              onClick={() => { setExperienceLevel(option); setTimeout(nextStep, 180); }}
+              className={`w-full rounded-xl px-3 py-3 text-left transition ${experienceLevel === option ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}
             >
-              {labelize(option)}
+              <p className="font-medium text-white">{labelize(option)}</p>
+              <p className="mt-0.5 text-xs text-zinc-300/70">{EXPERIENCE_DESCRIPTIONS[option]}</p>
             </button>
           ))}
         </section>
@@ -585,10 +616,11 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
             <button
               key={option}
               type="button"
-              onClick={() => setCoachingStyle(option)}
-              className={`w-full rounded-xl px-3 py-3 text-left ${coachingStyle === option ? "bg-white/20" : "bg-white/8"}`}
+              onClick={() => { setCoachingStyle(option); setTimeout(nextStep, 180); }}
+              className={`w-full rounded-xl px-3 py-3 text-left transition ${coachingStyle === option ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}
             >
-              {labelize(option)}
+              <p className="font-medium text-white">{labelize(option)}</p>
+              <p className="mt-0.5 text-xs text-zinc-300/70">{STYLE_DESCRIPTIONS[option]}</p>
             </button>
           ))}
         </section>
@@ -596,11 +628,13 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
 
       {step === 3 ? (
         <section className="glass-card grid grid-cols-2 gap-2 rounded-2xl p-4">
-          <button type="button" onClick={() => setUnits("LB")} className={`rounded-xl px-3 py-3 ${units === "LB" ? "bg-white/20" : "bg-white/8"}`}>
-            lb
+          <button type="button" onClick={() => { setUnits("LB"); setTimeout(nextStep, 180); }} className={`rounded-xl px-3 py-4 text-center transition ${units === "LB" ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}>
+            <p className="text-lg font-semibold text-white">lb</p>
+            <p className="mt-0.5 text-xs text-zinc-300/70">Pounds</p>
           </button>
-          <button type="button" onClick={() => setUnits("KG")} className={`rounded-xl px-3 py-3 ${units === "KG" ? "bg-white/20" : "bg-white/8"}`}>
-            kg
+          <button type="button" onClick={() => { setUnits("KG"); setTimeout(nextStep, 180); }} className={`rounded-xl px-3 py-4 text-center transition ${units === "KG" ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}>
+            <p className="text-lg font-semibold text-white">kg</p>
+            <p className="mt-0.5 text-xs text-zinc-300/70">Kilograms</p>
           </button>
         </section>
       ) : null}
@@ -611,10 +645,11 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
             <button
               key={option}
               type="button"
-              onClick={() => setSplitType(option)}
-              className={`w-full rounded-xl px-3 py-3 text-left ${splitType === option ? "bg-white/20" : "bg-white/8"}`}
+              onClick={() => { setSplitType(option); setTimeout(nextStep, 180); }}
+              className={`w-full rounded-xl px-3 py-3 text-left transition ${splitType === option ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}
             >
-              {labelize(option)}
+              <p className="font-medium text-white">{labelize(option)}</p>
+              <p className="mt-0.5 text-xs text-zinc-300/70">{SPLIT_DESCRIPTIONS[option]}</p>
             </button>
           ))}
         </section>
@@ -630,16 +665,30 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
       ) : null}
 
       {step === 6 ? (
-        <section className="glass-card rounded-2xl p-4">
-          <label className="text-sm text-zinc-200/85">Calibration workouts: {calibrationLength}</label>
-          <input
-            type="range"
-            min={3}
-            max={20}
-            value={calibrationLength}
-            onChange={(e) => setCalibrationLength(Number(e.target.value))}
-            className="glass-slider mt-3"
-          />
+        <section className="glass-card space-y-3 rounded-2xl p-4">
+          <div className="rounded-xl border border-white/12 bg-white/5 p-3 text-xs text-zinc-200/80 space-y-1">
+            <p className="font-semibold text-zinc-100">What is calibration?</p>
+            <p>During calibration, the app watches how you actually train — the weights you lift and reps you hit — to learn your current strength level.</p>
+            <p>Once complete, recommendations switch from generic defaults to suggestions tailored specifically to you.</p>
+          </div>
+          <label className="block text-sm text-zinc-200/85">
+            <span>Calibration workouts: <span className="font-semibold text-white">{calibrationLength}</span></span>
+            <p className="mt-0.5 text-xs text-zinc-300/70">
+              {calibrationLength <= 5 ? "Quick start — less data, early recommendations." : calibrationLength <= 10 ? "Recommended — good balance of speed and accuracy." : "Thorough — slower start, but highly accurate recommendations."}
+            </p>
+            <input
+              type="range"
+              min={3}
+              max={20}
+              value={calibrationLength}
+              onChange={(e) => setCalibrationLength(Number(e.target.value))}
+              className="glass-slider mt-3"
+            />
+            <div className="mt-1 flex justify-between text-[10px] text-zinc-400/70">
+              <span>3 (fast)</span>
+              <span>20 (thorough)</span>
+            </div>
+          </label>
         </section>
       ) : null}
 

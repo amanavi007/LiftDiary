@@ -67,26 +67,18 @@ export default async function HomePage() {
     <ScreenShell>
       <header className="mb-3">
         <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">LiftDiary</p>
-        <h1 className="text-3xl font-bold text-white">Train hard today</h1>
-        <p className="mt-1 text-sm text-zinc-200/75">Pick a planned day, log each set, and review your progress after every session.</p>
+        <h1 className="text-3xl font-bold text-white">{streak === 0 ? "Welcome" : streak < 5 ? "Keep it going" : "Welcome back"}</h1>
+        <p className="mt-1 text-sm text-zinc-200/75">{streak === 0 ? "Pick a workout day below and log your first session." : `${streak} session${streak === 1 ? "" : "s"} logged. ${nextDay} is up next.`}</p>
       </header>
 
       {streak === 0 ? (
-        <section className="glass-card mb-4 rounded-2xl p-3">
-          <p className="text-xs uppercase tracking-[0.14em] text-zinc-300/70">New Here? Start in 3 Steps</p>
-          <ol className="mt-1.5 list-decimal space-y-1 pl-5 text-sm text-zinc-100/90">
-            <li>Open Today Plan and pick your workout day.</li>
-            <li>Log each set during your session.</li>
-            <li>Check History and Progress after you finish.</li>
+        <section className="glass-card mb-4 rounded-2xl p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200/70">Quick start</p>
+          <ol className="mt-2 space-y-2 text-sm text-zinc-100/90">
+            <li className="flex items-start gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">1</span><span>Pick your workout day in <strong>Today Plan</strong> below.</span></li>
+            <li className="flex items-start gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">2</span><span>Log your weight and reps for each set.</span></li>
+            <li className="flex items-start gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">3</span><span>Check <strong>Progress</strong> after {user.calibrationLength} sessions for personalised recommendations.</span></li>
           </ol>
-          <div className="mt-2 flex flex-wrap gap-2 text-xs">
-            <Link href="/workout/start" className="glass-pill px-3 py-1 text-zinc-100">
-              Start Workout
-            </Link>
-            <Link href="/history" className="glass-pill px-3 py-1 text-zinc-200/90">
-              View History
-            </Link>
-          </div>
         </section>
       ) : null}
 
@@ -110,13 +102,22 @@ export default async function HomePage() {
           <p className="text-lg font-semibold text-white">{streak}</p>
         </div>
         <div className="glass-card rounded-xl px-3 py-3">
-          <p className="text-xs text-zinc-300/70">Last 7 Days</p>
+          <p className="text-xs text-zinc-300/70">This Week</p>
           <p className="text-lg font-semibold text-white">{sessionsThisWeek}</p>
         </div>
         {!user.calibrationComplete && (
-          <div className="glass-card rounded-xl px-3 py-3">
-            <p className="text-xs text-zinc-300/70">Calibration</p>
-            <p className="text-lg font-semibold text-white">{calibrationProgress}</p>
+          <div className="glass-card col-span-2 rounded-xl px-3 py-3">
+            <div className="mb-1.5 flex items-center justify-between">
+              <p className="text-xs text-zinc-300/70">Calibration progress</p>
+              <p className="text-xs font-semibold text-white">{calibrationProgress} workouts</p>
+            </div>
+            <div className="overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-1.5 rounded-full bg-gradient-to-r from-orange-600 to-orange-400 transition-all"
+                style={{ width: `${(user.workoutsCompletedInCalibration / user.calibrationLength) * 100}%` }}
+              />
+            </div>
+            <p className="mt-1.5 text-[11px] text-zinc-400/80">Complete {user.calibrationLength - user.workoutsCompletedInCalibration} more session{user.calibrationLength - user.workoutsCompletedInCalibration === 1 ? "" : "s"} to unlock personalised recommendations.</p>
           </div>
         )}
       </section>
