@@ -5,147 +5,142 @@ import { ScreenShell } from "@/components/screen-shell";
 import { isOnboardingComplete, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(value);
-}
-
 export default async function HomePage() {
   const user = await requireUser();
   if (!isOnboardingComplete(user)) redirect("/onboarding");
 
   const routine = user.routines[0];
+
+  // Last session determines which day is "next"
   const lastSession = await prisma.workoutSession.findFirst({
     where: { userId: user.id, endedAt: { not: null } },
-    include: {
-      routineDay: true,
-      _count: {
-        select: {
-          sets: true,
-        },
-      },
-    },
+    include: { routineDay: true },
     orderBy: { startedAt: "desc" },
   });
 
-  const nextDay = (() => {
-    if (!routine?.days?.length) return "Build your routine";
-    if (!lastSession) return routine.days[0].label;
-    const nextIndex = (lastSession.routineDay.dayIndex + 1) % routine.days.length;
-    return routine.days[nextIndex]?.label ?? routine.days[0].label;
-  })();
+  const nextDayIndex = lastSession
+    ? (lastSession.routineDay.dayIndex + 1) % (routine?.days.length ?? 1)
+    : 0;
+  const nextDayId = routine?.days[nextDayIndex]?.id ?? routine?.days[0]?.id ?? "";
+  const nextDay = routine?.days[nextDayIndex]?.label ?? routine?.days[0]?.label ?? "Workout";
 
-  const nextDayId = (() => {
-    if (!routine?.days?.length) return "";
-    if (!lastSession) return routine.days[0].id;
-    const nextIndex = (lastSession.routineDay.dayIndex + 1) % routine.days.length;
-    return routine.days[nextIndex]?.id ?? routine.days[0].id;
-  })();
-
-  const streak = await prisma.workoutSession.count({
-    where: {
-      userId: user.id,
-      endedAt: { not: null },
-    },
+  // Consecutive-day streak
+  const completedSessions = await prisma.workoutSession.findMany({
+    where: { userId: user.id, endedAt: { not: null } },
+    select: { startedAt: true },
+    orderBy: { startedAt: "desc" },
   });
 
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const dayKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const distinctDays = [...new Set(completedSessions.map((s) => dayKey(s.startedAt)))];
+  const today = dayKey(new Date());
+  const yesterday = dayKey(new Date(Date.now() - 86_400_000));
 
-  const sessionsThisWeek = await prisma.workoutSession.count({
-    where: {
-      userId: user.id,
-      endedAt: { gte: sevenDaysAgo },
-    },
+  let streak = 0;
+  if (distinctDays.length > 0 && (distinctDays[0] === today || distinctDays[0] === yesterday)) {
+    const cursor = new Date(distinctDays[0] === today ? Date.now() : Date.now() - 86_400_000);
+    for (const day of distinctDays) {
+      if (dayKey(cursor) === day) {
+        streak += 1;
+        cursor.setDate(cursor.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+  }
+
+  // In-progress session for resume banner
+  const activeSession = await prisma.workoutSession.findFirst({
+    where: { userId: user.id, endedAt: null },
+    include: { routineDay: true },
+    orderBy: { startedAt: "desc" },
   });
 
-  const calibrationProgress = `${Math.min(user.workoutsCompletedInCalibration, user.calibrationLength)}/${user.calibrationLength}`;
+  const calibrationProgress = Math.min(user.workoutsCompletedInCalibration, user.calibrationLength);
+  const calibrationPct = (calibrationProgress / user.calibrationLength) * 100;
 
   return (
     <ScreenShell>
-      <header className="mb-3">
-        <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">LiftDiary</p>
-        <h1 className="text-3xl font-bold text-white">{streak === 0 ? "Welcome" : streak < 5 ? "Keep it going" : "Welcome back"}</h1>
-        <p className="mt-1 text-sm text-zinc-200/75">{streak === 0 ? "Pick a workout day below and log your first session." : `${streak} session${streak === 1 ? "" : "s"} logged. ${nextDay} is up next.`}</p>
+      {/* Compact header */}
+      <header className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.22em] text-orange-200/60">LiftDiary</p>
+          <h1 className="mt-0.5 text-2xl font-black text-white">
+            {completedSessions.length === 0
+              ? "Let's go"
+              : streak >= 3
+              ? `${streak}-day streak 🔥`
+              : nextDay}
+          </h1>
+          {completedSessions.length > 0 && (
+            <p className="mt-0.5 text-xs text-zinc-500">
+              {completedSessions.length} session{completedSessions.length === 1 ? "" : "s"} logged
+            </p>
+          )}
+        </div>
+        {streak > 0 && streak < 3 && (
+          <div className="mt-1 flex shrink-0 items-center gap-1.5 rounded-full border border-white/12 bg-white/6 px-3 py-1.5">
+            <span className="text-sm">🔥</span>
+            <span className="text-sm font-bold text-orange-300">{streak}</span>
+          </div>
+        )}
       </header>
 
-      {streak === 0 ? (
-        <section className="glass-card mb-4 rounded-2xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-200/70">Quick start</p>
-          <ol className="mt-2 space-y-2 text-sm text-zinc-100/90">
-            <li className="flex items-start gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">1</span><span>Pick your workout day in <strong>Today Plan</strong> below.</span></li>
-            <li className="flex items-start gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">2</span><span>Log your weight and reps for each set.</span></li>
-            <li className="flex items-start gap-2"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/15 text-[11px] font-bold text-white">3</span><span>Check <strong>Progress</strong> after {user.calibrationLength} sessions for personalised recommendations.</span></li>
-          </ol>
-        </section>
+      {/* Resume in-progress session */}
+      {activeSession ? (
+        <Link
+          href={`/workout/session/${activeSession.id}`}
+          className="mb-3 flex items-center justify-between rounded-2xl border border-orange-500/40 bg-orange-500/10 px-4 py-3"
+        >
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-orange-300">
+              Resume Workout
+            </p>
+            <p className="mt-0.5 text-sm font-semibold text-white">
+              {activeSession.routineDay.label} in progress
+            </p>
+          </div>
+          <span className="text-orange-300">→</span>
+        </Link>
       ) : null}
 
+      {/* Hero: today's workout */}
       <HomeTodayPlanClient
         defaultDayId={nextDayId}
         dayPlans={(routine?.days ?? []).map((day) => ({
           id: day.id,
           label: day.label,
-          exercises: day.exercises.map((exercise) => ({
-            name: exercise.exercise.name,
-            targetSets: exercise.targetSets,
-            targetRepRangeLow: exercise.targetRepRangeLow,
-            targetRepRangeHigh: exercise.targetRepRangeHigh,
+          exercises: day.exercises.map((e) => ({
+            name: e.exercise.name,
+            targetSets: e.targetSets,
+            targetRepRangeLow: e.targetRepRangeLow,
+            targetRepRangeHigh: e.targetRepRangeHigh,
           })),
         }))}
       />
 
-      <section className="mb-4 grid grid-cols-2 gap-3">
-        <div className="glass-card rounded-xl px-3 py-3">
-          <p className="text-xs text-zinc-300/70">Total Sessions</p>
-          <p className="text-lg font-semibold text-white">{streak}</p>
+      {/* Calibration progress — slim, only while active */}
+      {!user.calibrationComplete ? (
+        <div className="mt-3 rounded-2xl border border-white/10 bg-white/4 px-4 py-3">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span className="text-zinc-400">AI calibrating</span>
+            <span className="font-medium text-white">
+              {calibrationProgress}/{user.calibrationLength} sessions
+            </span>
+          </div>
+          <div className="h-1 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-orange-600 to-orange-400 transition-all"
+              style={{ width: `${calibrationPct}%` }}
+            />
+          </div>
+          <p className="mt-2 text-[11px] text-zinc-500">
+            {user.calibrationLength - calibrationProgress} more session
+            {user.calibrationLength - calibrationProgress === 1 ? "" : "s"} to unlock personalised weights
+          </p>
         </div>
-        <div className="glass-card rounded-xl px-3 py-3">
-          <p className="text-xs text-zinc-300/70">This Week</p>
-          <p className="text-lg font-semibold text-white">{sessionsThisWeek}</p>
-        </div>
-        {!user.calibrationComplete && (
-          <div className="glass-card col-span-2 rounded-xl px-3 py-3">
-            <div className="mb-1.5 flex items-center justify-between">
-              <p className="text-xs text-zinc-300/70">Calibration progress</p>
-              <p className="text-xs font-semibold text-white">{calibrationProgress} workouts</p>
-            </div>
-            <div className="overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-1.5 rounded-full bg-gradient-to-r from-orange-600 to-orange-400 transition-all"
-                style={{ width: `${(user.workoutsCompletedInCalibration / user.calibrationLength) * 100}%` }}
-              />
-            </div>
-            <p className="mt-1.5 text-[11px] text-zinc-400/80">Complete {user.calibrationLength - user.workoutsCompletedInCalibration} more session{user.calibrationLength - user.workoutsCompletedInCalibration === 1 ? "" : "s"} to unlock personalised recommendations.</p>
-          </div>
-        )}
-      </section>
-
-      <section className="glass-card rounded-2xl p-3">
-        <p className="text-xs uppercase tracking-[0.14em] text-zinc-300/70">Recent Activity</p>
-        {lastSession ? (
-          <div className="mt-1.5 space-y-0.5">
-            <p className="text-sm font-semibold text-white">{lastSession.routineDay.label}</p>
-            <p className="text-xs text-zinc-300/75">
-              {formatDate(lastSession.startedAt)} • {lastSession._count.sets} sets logged
-            </p>
-          </div>
-        ) : (
-          <p className="mt-1.5 text-sm text-zinc-300/75">No sessions logged yet. Tap Start Workout to begin and this section will show your latest result.</p>
-        )}
-
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <div className="rounded-xl bg-white/8 px-2.5 py-1.5">
-            <p className="text-xs text-zinc-300/70">Next Up</p>
-            <p className="text-sm font-semibold text-white">{nextDay}</p>
-          </div>
-          <div className="rounded-xl bg-white/8 px-2.5 py-1.5">
-            <p className="text-xs text-zinc-300/70">Status</p>
-            <p className="text-sm font-semibold text-white">Ready</p>
-          </div>
-        </div>
-      </section>
+      ) : null}
     </ScreenShell>
   );
 }

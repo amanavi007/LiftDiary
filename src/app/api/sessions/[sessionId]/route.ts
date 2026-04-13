@@ -71,13 +71,25 @@ export async function GET(_: Request, context: { params: Promise<{ sessionId: st
       defaultSets: rde.targetSets,
     });
 
-    await prisma.recommendation.create({
-      data: {
+    // Only persist if no recommendation has been generated for this exercise
+    // since the session started — prevents duplicate rows on repeated fetches.
+    const existingRec = await prisma.recommendation.findFirst({
+      where: {
         userId: auth,
         exerciseId: rde.exerciseId,
-        ...recommendation,
+        generatedAt: { gte: session.startedAt },
       },
     });
+
+    if (!existingRec) {
+      await prisma.recommendation.create({
+        data: {
+          userId: auth,
+          exerciseId: rde.exerciseId,
+          ...recommendation,
+        },
+      });
+    }
 
     exercisesWithRecommendations.push({
       routineDayExerciseId: rde.id,

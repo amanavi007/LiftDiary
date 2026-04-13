@@ -40,10 +40,33 @@ export default async function DashboardPage() {
     byExercise.set(set.exerciseId, row);
   }
 
-  const exerciseRows = Array.from(byExercise.values()).sort((a, b) => a.name.localeCompare(b.name));
-  const majorLiftNames = ["Barbell Bench Press", "Back Squat", "Deadlift", "Overhead Press", "Barbell Row"];
-  const majorRows = exerciseRows.filter((row) => majorLiftNames.includes(row.name));
-  const otherRows = exerciseRows.filter((row) => !majorLiftNames.includes(row.name));
+  // Count distinct sessions each exercise appears in, so we can surface the
+  // user's most-trained lifts rather than hardcoding exercise names.
+  const sessionCountByExercise = new Map<string, Set<string>>();
+  for (const set of sets) {
+    const sessions = sessionCountByExercise.get(set.exerciseId) ?? new Set<string>();
+    sessions.add(set.sessionId);
+    sessionCountByExercise.set(set.exerciseId, sessions);
+  }
+
+  const exerciseRows = Array.from(byExercise.entries())
+    .map(([exerciseId, row]) => ({
+      ...row,
+      exerciseId,
+      sessionCount: sessionCountByExercise.get(exerciseId)?.size ?? 0,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  // Top lifts = the 6 exercises the user has trained in the most sessions.
+  const topLiftIds = new Set(
+    [...exerciseRows]
+      .sort((a, b) => b.sessionCount - a.sessionCount)
+      .slice(0, 6)
+      .map((r) => r.exerciseId),
+  );
+
+  const majorRows = exerciseRows.filter((row) => topLiftIds.has(row.exerciseId));
+  const otherRows = exerciseRows.filter((row) => !topLiftIds.has(row.exerciseId));
 
   return (
     <ScreenShell>
@@ -52,23 +75,23 @@ export default async function DashboardPage() {
         Track your strongest sets over time. Estimated 1RM is a projection based on your logged weight and reps.
       </p>
 
-      <section className="glass-card mb-3 rounded-2xl p-4">
-        <h2 className="mb-1 text-sm font-semibold text-zinc-200/85">Major Lift Estimated 1RM</h2>
-        <p className="mb-2 text-xs text-zinc-300/75">If a value is blank, log at least one set for that lift first.</p>
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          {majorLiftNames.map((lift) => {
-            const found = exerciseRows.find((row) => row.name === lift);
-            return (
-              <div key={lift} className="glass-card rounded-xl p-2">
-                <p className="text-xs text-zinc-200/70">{lift}</p>
+      {majorRows.length > 0 ? (
+        <section className="glass-card mb-3 rounded-2xl p-4">
+          <h2 className="mb-1 text-sm font-semibold text-zinc-200/85">Your Top Lifts</h2>
+          <p className="mb-2 text-xs text-zinc-300/75">Your most-trained exercises ranked by sessions logged.</p>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            {majorRows.map((row) => (
+              <div key={row.exerciseId} className="glass-card rounded-xl p-2">
+                <p className="truncate text-xs text-zinc-200/70">{row.name}</p>
                 <p className="font-semibold text-white">
-                  {found ? `${found.bestE1RM.toFixed(1)} ${user.units.toLowerCase()}` : "—"}
+                  {row.bestE1RM.toFixed(1)} {user.units.toLowerCase()}
                 </p>
+                <p className="text-[10px] text-zinc-400/70">{row.sessionCount} sessions</p>
               </div>
-            );
-          })}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="space-y-3 pb-24">
         {exerciseRows.length === 0 ? (
@@ -82,7 +105,7 @@ export default async function DashboardPage() {
 
         {majorRows.length > 0 ? (
           <article className="glass-card rounded-2xl p-4">
-            <p className="mb-2 text-sm font-semibold text-zinc-100">Major Lift Trends</p>
+            <p className="mb-2 text-sm font-semibold text-zinc-100">Top Lift Trends</p>
             <div className="space-y-2">
               {majorRows.map((row) => (
                 <details key={row.name} className="rounded-xl border border-white/12 bg-white/6 p-3" open>

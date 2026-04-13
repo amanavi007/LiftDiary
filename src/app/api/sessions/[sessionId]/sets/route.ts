@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireApiUserId } from "@/lib/server-auth";
+import { estimated1RM } from "@/lib/pr";
 
 const schema = z.object({
   exerciseId: z.string().min(1),
@@ -42,6 +43,20 @@ export async function POST(request: Request, context: { params: Promise<{ sessio
     return NextResponse.json({ error: "Exercise not in this routine" }, { status: 400 });
   }
 
+  // Fetch historical bests for this exercise (excluding the current session)
+  // so we can tell the client immediately whether this is a PR.
+  const historicalSets = await prisma.setEntry.findMany({
+    where: {
+      exerciseId: parsed.data.exerciseId,
+      session: { userId: auth, id: { not: sessionId } },
+      isFailed: false,
+    },
+    select: { weight: true, reps: true },
+  });
+
+  const prevBestWeight = historicalSets.reduce((m, s) => Math.max(m, s.weight), 0);
+  const prevBestE1RM = historicalSets.reduce((m, s) => Math.max(m, estimated1RM(s.weight, s.reps)), 0);
+
   const set = await prisma.setEntry.create({
     data: {
       sessionId,
@@ -53,5 +68,17 @@ export async function POST(request: Request, context: { params: Promise<{ sessio
     },
   });
 
-  return NextResponse.json({ set }, { status: 201 });
+  // Only declare a PR on non-failed sets with actual weight logged.
+  const pr =
+    !parsed.data.isFailed && parsed.data.weight > 0 && historicalSets.length > 0
+      ? {
+          isWeightPR: parsed.data.weight > prevBestWeight,
+          isE1RMPR: estimated1RM(parsed.data.weight, parsed.data.reps) > prevBestE1RM,
+          prevBestWeight,
+          prevBestE1RM: Number(prevBestE1RM.toFixed(1)),
+          newE1RM: Number(estimated1RM(parsed.data.weight, parsed.data.reps).toFixed(1)),
+        }
+      : null;
+
+  return NextResponse.json({ set, pr }, { status: 201 });
 }

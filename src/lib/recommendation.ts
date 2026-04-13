@@ -29,6 +29,42 @@ function styleFactor(style: CoachingStyle) {
   return 1;
 }
 
+/**
+ * Converts a session's actual next weight into what a personal trainer SHOULD
+ * have prescribed, given the performance in the current session.
+ *
+ * This keeps the ML model prescriptive rather than just tracking what the
+ * user happened to do — i.e. if they earned a progression but didn't take it,
+ * the model still learns to recommend progression in that situation.
+ */
+function prescriptiveTarget(args: {
+  currentWeight: number;
+  currentBestReps: number;
+  nextActualWeight: number;
+  repTarget: { low: number; high: number };
+  movementType: MovementType;
+  coachingStyle: CoachingStyle;
+}): number {
+  const { currentWeight, currentBestReps, nextActualWeight, repTarget, movementType, coachingStyle } = args;
+
+  if (currentBestReps >= repTarget.high + 1) {
+    // Earned progression — prescribe the increase the trainer would have assigned
+    const pct =
+      coachingStyle === "CONSERVATIVE" ? 0.025
+      : coachingStyle === "AGGRESSIVE" ? (movementType === "COMPOUND" ? 0.075 : 0.05)
+      : movementType === "COMPOUND" ? 0.05 : 0.025;
+    return Math.max(nextActualWeight, currentWeight * (1 + pct));
+  }
+
+  if (currentBestReps < repTarget.low) {
+    // Missed the bottom — prescribe a slight deload regardless of what user did
+    return Math.min(nextActualWeight, currentWeight * 0.975);
+  }
+
+  // Within target range — actual weight is the right call
+  return nextActualWeight;
+}
+
 function oneHotGoal(goal: Goal) {
   return [
     goal === "STRENGTH" ? 1 : 0,
@@ -225,6 +261,18 @@ export function buildRecommendation(args: {
     const nextBestWeight = next.sets.reduce((m, s) => Math.max(m, s.weight), 0);
     if (!currentBestWeight || !nextBestWeight) continue;
 
+    // Use a prescriptive target rather than what the user actually lifted.
+    // This teaches the model what SHOULD happen (progressive overload when earned,
+    // deload when reps are missed) rather than just replicating past behaviour.
+    const target = prescriptiveTarget({
+      currentWeight: currentBestWeight,
+      currentBestReps,
+      nextActualWeight: nextBestWeight,
+      repTarget: GOAL_REP_RANGES[args.goal],
+      movementType: args.movementType,
+      coachingStyle: args.coachingStyle,
+    });
+
     features.push(
       buildFeatureVector({
         previousWeight: currentBestWeight,
@@ -235,7 +283,7 @@ export function buildRecommendation(args: {
         goal: args.goal,
       }),
     );
-    targets.push(nextBestWeight);
+    targets.push(target);
   }
 
   const latestMovingE1RM =
@@ -276,7 +324,7 @@ export function buildRecommendation(args: {
         recommendedSets: args.defaultSets,
         confidenceScore: Math.max(0.5, Math.min(0.95, 0.55 + features.length / 30 + model.r2 / 2)),
         modelVersion: "ml-linear-v1",
-        reasonText: `ML model used ${features.length} prior sessions and recent trend to set your next working weight.`,
+        reasonText: `Based on ${features.length} sessions of your progression trend${latestBestReps >= repTarget.high + 1 ? " — you've been hitting the top of your target range, so load is going up" : latestBestReps < repTarget.low ? " — recent reps were below target, keeping load conservative" : " — you're hitting your target range consistently"}.`,
       } satisfies RecommendationResult;
     }
   }
