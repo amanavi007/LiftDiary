@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { SectionLabel } from "@/components/ui/section-label";
+import { swapCandidates } from "@/lib/workout-helpers";
 
 export type SwapExercise = { id: string; name: string; defaultRestSec: number };
 
@@ -18,6 +19,7 @@ export function ExerciseQueue({
   items,
   activeId,
   catalog,
+  takenIds,
   onLoadCatalog,
   onSelect,
   onMove,
@@ -27,6 +29,7 @@ export function ExerciseQueue({
   items: QueueItem[];
   activeId: string;
   catalog: SwapExercise[];
+  takenIds: string[];
   onLoadCatalog: () => void;
   onSelect: (id: string) => void;
   onMove: (id: string, direction: "up" | "down") => void;
@@ -36,8 +39,8 @@ export function ExerciseQueue({
   const [swapFor, setSwapFor] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
-  const q = query.trim().toLowerCase();
-  const results = q ? catalog.filter((e) => e.name.toLowerCase().includes(q)).slice(0, 8) : [];
+  const q = query.trim();
+  const results = swapCandidates(catalog, takenIds, query);
   const small =
     "min-h-9 rounded-full bg-line px-3 text-[11px] font-bold text-muted-2 transition hover:text-ink disabled:opacity-40";
 

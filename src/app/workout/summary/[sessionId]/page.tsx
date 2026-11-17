@@ -8,6 +8,7 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { requireUser } from "@/lib/auth";
 import { estimated1RM } from "@/lib/pr";
 import { prisma } from "@/lib/prisma";
+import { sessionBestSeries } from "@/lib/progress";
 import { liftTrend } from "@/lib/trend";
 
 function confidenceLabel(score: number) {
@@ -82,9 +83,20 @@ export default async function WorkoutSummaryPage({ params }: { params: Promise<{
     );
     const lastTop = lastSets?.length ? Math.max(...lastSets.map((s) => s.weight)) : null;
 
+    const series = sessionBestSeries(
+      previousSessions.flatMap((p) =>
+        p.sets
+          .filter((x) => x.exerciseId === exerciseId)
+          .map((x) => ({ sessionId: p.id, date: p.startedAt.toISOString(), weight: x.weight, reps: x.reps, isFailed: false })),
+      ),
+    )
+      .map((pt) => pt.e1rm)
+      .slice(-5);
+
     return [
       {
         name,
+        trendBars: [...series, Number(e1rm.toFixed(1))],
         topWeight,
         topReps,
         e1rm,
@@ -133,6 +145,17 @@ export default async function WorkoutSummaryPage({ params }: { params: Promise<{
                   .filter(Boolean)
                   .join(" · ")}
               </p>
+              {pr.trendBars.length > 1 ? (
+                <div className="mt-3 flex h-9 items-end gap-1" aria-label="Estimated 1RM over recent sessions" role="img">
+                  {pr.trendBars.map((v, i) => (
+                    <div
+                      key={i}
+                      className={`flex-1 rounded-sm ${i === pr.trendBars.length - 1 ? "bg-accent" : "bg-accent/25"}`}
+                      style={{ height: `${Math.max(12, (v / Math.max(...pr.trendBars)) * 100)}%` }}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </Card>
           ))}
 

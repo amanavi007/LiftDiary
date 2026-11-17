@@ -14,9 +14,10 @@ export async function GET() {
   });
 
   const csv = buildCsv(
-    ["date", "workout", "exercise", "set", "weight", "reps", "units", "failed"],
+    ["date", "started_at_utc", "workout", "exercise", "set", "weight", "reps", "units", "failed"],
     sets.map((s) => [
       s.session.startedAt.toISOString().slice(0, 10),
+      s.session.startedAt.toISOString(),
       s.session.routineDay.label,
       s.exercise.name,
       s.setIndex,
@@ -31,6 +32,7 @@ export async function GET() {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": 'attachment; filename="liftdiary-history.csv"',
+      "Cache-Control": "no-store",
     },
   });
 }

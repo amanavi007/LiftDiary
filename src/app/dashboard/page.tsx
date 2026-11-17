@@ -34,7 +34,7 @@ export default async function DashboardPage() {
       trend: sessionBestSeries(
         list.map((s) => ({
           sessionId: s.sessionId,
-          date: s.session.startedAt.toISOString().slice(0, 10),
+          date: s.session.startedAt.toISOString(),
           weight: s.weight,
           reps: s.reps,
           isFailed: s.isFailed,

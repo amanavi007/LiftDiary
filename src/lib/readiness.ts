@@ -28,7 +28,7 @@ export function computeReadiness(args: {
   sessions: ReadinessSession[];
 }): Readiness {
   const completed = args.sessions
-    .filter((s) => s.endedAt !== null)
+    .filter((s) => s.endedAt !== null && s.sets.length > 0)
     .sort((a, b) => b.endedAt!.getTime() - a.endedAt!.getTime());
 
   if (completed.length === 0) {

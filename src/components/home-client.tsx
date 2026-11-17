@@ -234,8 +234,15 @@ export function HomeClient({ data }: { data: HomeData }) {
           </ul>
         </Card>
         {error ? <p className="text-sm text-danger">{error}</p> : null}
+        {day.lifts.length === 0 ? (
+          <Card>
+            <p className="text-sm text-muted-2">
+              This day has no exercises yet. Add some in Settings → Edit current routine.
+            </p>
+          </Card>
+        ) : null}
         <div className="sticky bottom-[4.75rem] z-30 lg:static">
-          <Button size="lg" disabled={loading} onClick={start} className="shadow-[0_8px_24px_rgba(16,17,20,0.9)]">
+          <Button size="lg" disabled={loading || day.lifts.length === 0} onClick={start} className="shadow-[0_8px_24px_rgba(16,17,20,0.9)]">
             {loading ? "Starting…" : data.activeSession ? "Start a new workout" : "Start workout"}
           </Button>
         </div>

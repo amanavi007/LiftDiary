@@ -5,8 +5,8 @@ import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YA
 type Point = { date: string; e1rm: number };
 
 function shortDate(iso: string) {
-  const [, m, d] = iso.split("-");
-  return `${Number(m)}/${Number(d)}`;
+  const d = new Date(iso); // rendered in the viewer's local time zone
+  return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
 export function PRChart({ data, unit }: { data: Point[]; unit: string }) {

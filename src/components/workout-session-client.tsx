@@ -272,7 +272,19 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
 
   if (loading) return <p className="text-sm text-muted-2">Loading workout…</p>;
   if (error && !session) return <p className="text-sm text-danger">{error}</p>;
-  if (!session || !active) return <p className="text-sm text-muted-2">No active workout found.</p>;
+  if (!session || !active) {
+    return (
+      <div className="space-y-4">
+        <p className="text-sm text-muted-2">This workout has no exercises to log.</p>
+        <Button size="lg" onClick={finishWorkout} disabled={finishing}>
+          {finishing ? "Closing…" : "Close workout"}
+        </Button>
+        <Link href="/home" className="block text-center text-sm font-bold text-muted-2">
+          ‹ Home
+        </Link>
+      </div>
+    );
+  }
 
   const totalSets = session.exercises.reduce((sum, e) => sum + e.targetSets, 0);
   const loggedSets = session.exercises.reduce((sum, e) => sum + loggedOf(e).length, 0);
@@ -288,6 +300,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
       items={queueItems}
       activeId={activeId}
       catalog={catalog}
+      takenIds={[...ordered.map((e) => e.exercise.id), ...Object.values(swapBy).map((e) => e.id)]}
       onLoadCatalog={loadCatalog}
       onSelect={setActiveId}
       onMove={move}

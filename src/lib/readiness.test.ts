@@ -81,4 +81,10 @@ describe("computeReadiness", () => {
     const r = run([session(3, { sets: [] })]);
     expect(Number.isNaN(r.score)).toBe(false);
   });
+
+  it("ignores finished sessions with nothing logged", () => {
+    const r = run([session(1, { sets: [] }), session(0.2, { sets: [] })]);
+    expect(r.score).toBeNull();
+    expect(r.label).toBe("Getting started");
+  });
 });

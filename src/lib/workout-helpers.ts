@@ -98,3 +98,9 @@ export function tutorialQuery(exerciseName: string) {
 export function tutorialSearchUrl(exerciseName: string) {
   return `https://www.youtube.com/results?search_query=${encodeURIComponent(tutorialQuery(exerciseName))}`;
 }
+
+export function swapCandidates<T extends { id: string; name: string }>(catalog: T[], takenIds: string[], query: string): T[] {
+  const q = query.trim().toLowerCase();
+  if (!q) return [];
+  return catalog.filter((e) => !takenIds.includes(e.id) && e.name.toLowerCase().includes(q)).slice(0, 8);
+}

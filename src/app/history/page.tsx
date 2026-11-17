@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ScreenShell } from "@/components/screen-shell";
 import { buttonClass } from "@/components/ui/button";
+import { LocalDate } from "@/components/local-date";
 import { Card } from "@/components/ui/card";
 import { Pill } from "@/components/ui/pill";
 import { SectionLabel } from "@/components/ui/section-label";
@@ -8,9 +9,7 @@ import { StatTile } from "@/components/ui/stat-tile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(value);
-}
+const DATE_OPTIONS: Intl.DateTimeFormatOptions = { weekday: "short", month: "short", day: "numeric", year: "numeric" };
 
 function compact(value: number) {
   return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
@@ -102,7 +101,9 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-serif text-3xl leading-none">{session.routineDay.label}</p>
-                    <p className="mt-1 text-xs text-muted-2">{formatDate(session.startedAt)}</p>
+                    <p className="mt-1 text-xs text-muted-2">
+                      <LocalDate iso={session.startedAt.toISOString()} options={DATE_OPTIONS} />
+                    </p>
                   </div>
                   <Pill>
                     {exercises.length} exercise{exercises.length === 1 ? "" : "s"}

@@ -37,12 +37,12 @@ export async function loadHomeData(user: User): Promise<HomeData> {
 
   const [sessions, completedCount, active] = await Promise.all([
     prisma.workoutSession.findMany({
-      where: { userId: user.id, endedAt: { not: null } },
+      where: { userId: user.id, endedAt: { not: null }, sets: { some: {} } },
       include: { sets: true },
       orderBy: { startedAt: "desc" },
       take: 150,
     }),
-    prisma.workoutSession.count({ where: { userId: user.id, endedAt: { not: null } } }),
+    prisma.workoutSession.count({ where: { userId: user.id, endedAt: { not: null }, sets: { some: {} } } }),
     prisma.workoutSession.findFirst({
       where: { userId: user.id, endedAt: null },
       include: { routineDay: true },
