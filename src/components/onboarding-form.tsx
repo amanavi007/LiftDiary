@@ -140,7 +140,7 @@ function rankExercises(exercises: Exercise[], query: string) {
   });
 }
 
-export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
+export function OnboardingForm({ mode = "edit", isFirstTime = false }: { mode?: "edit" | "new"; isFirstTime?: boolean }) {
   const router = useRouter();
   const [goal, setGoal] = useState<Goal>("GENERAL_FITNESS");
   const [experienceLevel, setExperienceLevel] = useState<ExperienceLevel>("BEGINNER");
@@ -536,24 +536,24 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4 pb-8">
-      <p className="text-xs uppercase tracking-[0.2em] text-orange-200/70">
-        {mode === "new" ? "Add New Split" : "Edit Current Routine"}
+      <p className="text-xs uppercase tracking-[0.2em] text-muted">
+        {isFirstTime ? "Set up your plan" : mode === "new" ? "Add New Split" : "Edit Current Routine"}
       </p>
       <div className="flex items-center justify-between">
-        <p className="text-xs text-zinc-300/75">Step {step + 1} of {FINAL_STEP + 1}</p>
-        <p className="text-xs text-zinc-300/50">{Math.round(((step + 1) / (FINAL_STEP + 1)) * 100)}%</p>
+        <p className="text-xs text-muted-2">Step {step + 1} of {FINAL_STEP + 1}</p>
+        <p className="text-xs text-muted-2">{Math.round(((step + 1) / (FINAL_STEP + 1)) * 100)}%</p>
       </div>
-      <div className="glass-card overflow-hidden rounded-full">
+      <div className="border border-line bg-surface overflow-hidden rounded-full">
         <div
-          className="h-1.5 bg-gradient-to-r from-red-700 to-orange-500 transition-all duration-300"
+          className="h-1.5 bg-accent transition-all duration-300"
           style={{ width: `${((step + 1) / (FINAL_STEP + 1)) * 100}%` }}
         />
       </div>
-      <h1 className="text-3xl font-bold text-white">{stepMeta[step].title}</h1>
-      <p className="text-sm text-zinc-200/75">{stepGuidance[step]}</p>
+      <h1 className="font-serif text-5xl leading-[0.95] text-ink">{stepMeta[step].title}</h1>
+      <p className="text-sm text-muted-2">{stepGuidance[step]}</p>
 
       {step === 0 ? (
-        <section className="glass-card space-y-2 rounded-2xl p-4">
+        <section className="border border-line bg-surface space-y-2 rounded-2xl p-4">
           {GOALS.map((option) => (
             <button
               key={option}
@@ -563,23 +563,23 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
                 setPreferredRestSeconds(RECOMMENDED_REST_BY_GOAL[option].defaultSeconds);
                 setTimeout(nextStep, 180);
               }}
-              className={`w-full rounded-xl px-3 py-3 text-left transition ${goal === option ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}
+              className={`w-full rounded-xl px-3 py-3 text-left transition ${goal === option ? "bg-accent/15 ring-1 ring-accent/60" : "bg-surface"}`}
             >
-              <p className="font-medium text-white">{labelize(option)}</p>
-              <p className="mt-0.5 text-xs text-zinc-300/70">{GOAL_DESCRIPTIONS[option]}</p>
+              <p className="font-medium text-ink">{labelize(option)}</p>
+              <p className="mt-0.5 text-xs text-muted-2">{GOAL_DESCRIPTIONS[option]}</p>
             </button>
           ))}
 
-          <div className="mt-3 rounded-xl border border-white/15 bg-white/5 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-200/75">Recommended Rest Time</p>
-            <div className="mt-2 space-y-1 text-xs text-zinc-200/85">
+          <div className="mt-3 rounded-xl border border-line bg-surface p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-2">Recommended Rest Time</p>
+            <div className="mt-2 space-y-1 text-xs text-muted-2">
               <p>Strength: 3-5 minutes</p>
               <p>Hypertrophy (Muscle Growth): 2-3 minutes</p>
               <p>Endurance: 30-90 seconds</p>
             </div>
           </div>
 
-          <label className="block text-sm text-zinc-200/85">
+          <label className="block text-sm text-muted-2">
             Preferred rest between sets: {preferredRestSeconds}s
             <input
               type="range"
@@ -588,92 +588,92 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
               step={15}
               value={preferredRestSeconds}
               onChange={(e) => setPreferredRestSeconds(Number(e.target.value))}
-              className="glass-slider mt-2"
+              className="w-full accent-[#c6ff3d] mt-2"
             />
           </label>
         </section>
       ) : null}
 
       {step === 1 ? (
-        <section className="glass-card space-y-2 rounded-2xl p-4">
+        <section className="border border-line bg-surface space-y-2 rounded-2xl p-4">
           {EXPERIENCES.map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => { setExperienceLevel(option); setTimeout(nextStep, 180); }}
-              className={`w-full rounded-xl px-3 py-3 text-left transition ${experienceLevel === option ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}
+              className={`w-full rounded-xl px-3 py-3 text-left transition ${experienceLevel === option ? "bg-accent/15 ring-1 ring-accent/60" : "bg-surface"}`}
             >
-              <p className="font-medium text-white">{labelize(option)}</p>
-              <p className="mt-0.5 text-xs text-zinc-300/70">{EXPERIENCE_DESCRIPTIONS[option]}</p>
+              <p className="font-medium text-ink">{labelize(option)}</p>
+              <p className="mt-0.5 text-xs text-muted-2">{EXPERIENCE_DESCRIPTIONS[option]}</p>
             </button>
           ))}
         </section>
       ) : null}
 
       {step === 2 ? (
-        <section className="glass-card space-y-2 rounded-2xl p-4">
+        <section className="border border-line bg-surface space-y-2 rounded-2xl p-4">
           {STYLES.map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => { setCoachingStyle(option); setTimeout(nextStep, 180); }}
-              className={`w-full rounded-xl px-3 py-3 text-left transition ${coachingStyle === option ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}
+              className={`w-full rounded-xl px-3 py-3 text-left transition ${coachingStyle === option ? "bg-accent/15 ring-1 ring-accent/60" : "bg-surface"}`}
             >
-              <p className="font-medium text-white">{labelize(option)}</p>
-              <p className="mt-0.5 text-xs text-zinc-300/70">{STYLE_DESCRIPTIONS[option]}</p>
+              <p className="font-medium text-ink">{labelize(option)}</p>
+              <p className="mt-0.5 text-xs text-muted-2">{STYLE_DESCRIPTIONS[option]}</p>
             </button>
           ))}
         </section>
       ) : null}
 
       {step === 3 ? (
-        <section className="glass-card grid grid-cols-2 gap-2 rounded-2xl p-4">
-          <button type="button" onClick={() => { setUnits("LB"); setTimeout(nextStep, 180); }} className={`rounded-xl px-3 py-4 text-center transition ${units === "LB" ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}>
-            <p className="text-lg font-semibold text-white">lb</p>
-            <p className="mt-0.5 text-xs text-zinc-300/70">Pounds</p>
+        <section className="border border-line bg-surface grid grid-cols-2 gap-2 rounded-2xl p-4">
+          <button type="button" onClick={() => { setUnits("LB"); setTimeout(nextStep, 180); }} className={`rounded-xl px-3 py-4 text-center transition ${units === "LB" ? "bg-accent/15 ring-1 ring-accent/60" : "bg-surface"}`}>
+            <p className="text-lg font-semibold text-ink">lb</p>
+            <p className="mt-0.5 text-xs text-muted-2">Pounds</p>
           </button>
-          <button type="button" onClick={() => { setUnits("KG"); setTimeout(nextStep, 180); }} className={`rounded-xl px-3 py-4 text-center transition ${units === "KG" ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}>
-            <p className="text-lg font-semibold text-white">kg</p>
-            <p className="mt-0.5 text-xs text-zinc-300/70">Kilograms</p>
+          <button type="button" onClick={() => { setUnits("KG"); setTimeout(nextStep, 180); }} className={`rounded-xl px-3 py-4 text-center transition ${units === "KG" ? "bg-accent/15 ring-1 ring-accent/60" : "bg-surface"}`}>
+            <p className="text-lg font-semibold text-ink">kg</p>
+            <p className="mt-0.5 text-xs text-muted-2">Kilograms</p>
           </button>
         </section>
       ) : null}
 
       {step === 4 ? (
-        <section className="glass-card space-y-2 rounded-2xl p-4">
+        <section className="border border-line bg-surface space-y-2 rounded-2xl p-4">
           {SPLITS.map((option) => (
             <button
               key={option}
               type="button"
               onClick={() => { setSplitType(option); setTimeout(nextStep, 180); }}
-              className={`w-full rounded-xl px-3 py-3 text-left transition ${splitType === option ? "bg-white/20 ring-1 ring-white/30" : "bg-white/8"}`}
+              className={`w-full rounded-xl px-3 py-3 text-left transition ${splitType === option ? "bg-accent/15 ring-1 ring-accent/60" : "bg-surface"}`}
             >
-              <p className="font-medium text-white">{labelize(option)}</p>
-              <p className="mt-0.5 text-xs text-zinc-300/70">{SPLIT_DESCRIPTIONS[option]}</p>
+              <p className="font-medium text-ink">{labelize(option)}</p>
+              <p className="mt-0.5 text-xs text-muted-2">{SPLIT_DESCRIPTIONS[option]}</p>
             </button>
           ))}
         </section>
       ) : null}
 
       {step === 5 ? (
-        <section className="glass-card rounded-2xl p-4">
-          <label className="text-sm text-zinc-200/85">
+        <section className="border border-line bg-surface rounded-2xl p-4">
+          <label className="text-sm text-muted-2">
             Routine Name
-            <input value={routineName} onChange={(e) => setRoutineName(e.target.value)} className="glass-input mt-2" />
+            <input value={routineName} onChange={(e) => setRoutineName(e.target.value)} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-ink outline-none focus:border-accent mt-2" />
           </label>
         </section>
       ) : null}
 
       {step === 6 ? (
-        <section className="glass-card space-y-3 rounded-2xl p-4">
-          <div className="rounded-xl border border-white/12 bg-white/5 p-3 text-xs text-zinc-200/80 space-y-1">
-            <p className="font-semibold text-zinc-100">What is calibration?</p>
+        <section className="border border-line bg-surface space-y-3 rounded-2xl p-4">
+          <div className="rounded-xl border border-line bg-surface p-3 text-xs text-muted-2 space-y-1">
+            <p className="font-semibold text-ink">What is calibration?</p>
             <p>During calibration, the app watches how you actually train — the weights you lift and reps you hit — to learn your current strength level.</p>
             <p>Once complete, recommendations switch from generic defaults to suggestions tailored specifically to you.</p>
           </div>
-          <label className="block text-sm text-zinc-200/85">
-            <span>Calibration workouts: <span className="font-semibold text-white">{calibrationLength}</span></span>
-            <p className="mt-0.5 text-xs text-zinc-300/70">
+          <label className="block text-sm text-muted-2">
+            <span>Calibration workouts: <span className="font-semibold text-ink">{calibrationLength}</span></span>
+            <p className="mt-0.5 text-xs text-muted-2">
               {calibrationLength <= 5 ? "Quick start — less data, early recommendations." : calibrationLength <= 10 ? "Recommended — good balance of speed and accuracy." : "Thorough — slower start, but highly accurate recommendations."}
             </p>
             <input
@@ -682,9 +682,9 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
               max={20}
               value={calibrationLength}
               onChange={(e) => setCalibrationLength(Number(e.target.value))}
-              className="glass-slider mt-3"
+              className="w-full accent-[#c6ff3d] mt-3"
             />
-            <div className="mt-1 flex justify-between text-[10px] text-zinc-400/70">
+            <div className="mt-1 flex justify-between text-[10px] text-muted-2">
               <span>3 (fast)</span>
               <span>20 (thorough)</span>
             </div>
@@ -693,9 +693,9 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
       ) : null}
 
       {step === BUILD_ENTRY_STEP ? (
-        <section className="glass-card space-y-2 rounded-2xl p-4">
+        <section className="border border-line bg-surface space-y-2 rounded-2xl p-4">
           <div className="mb-1">
-            <p className="text-xs uppercase tracking-[0.12em] text-zinc-300/70">Choose one option</p>
+            <p className="text-xs uppercase tracking-[0.12em] text-muted-2">Choose one option</p>
           </div>
           <button
             type="button"
@@ -705,16 +705,16 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
             }}
             className={`w-full rounded-2xl border px-4 py-4 text-left transition ${
               buildStartMode === "import"
-                ? "border-white/45 bg-white/18"
-                : "border-white/12 bg-white/6 hover:border-white/25 hover:bg-white/10"
+                ? "border-accent/50 bg-accent/15"
+                : "border-line bg-surface hover:border-accent/50 hover:bg-surface"
             }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-white">Import from screenshots</p>
-                <p className="mt-1 text-xs text-zinc-300/80">Use up to 3 images to auto-fill your workout days.</p>
+                <p className="text-base font-semibold text-ink">Import from screenshots</p>
+                <p className="mt-1 text-xs text-muted-2">Use up to 3 images to auto-fill your workout days.</p>
               </div>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${buildStartMode === "import" ? "bg-white/20 text-white" : "bg-white/10 text-zinc-300/90"}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${buildStartMode === "import" ? "bg-accent/15 text-ink" : "bg-surface text-muted-2"}`}>
                 Fastest
               </span>
             </div>
@@ -728,16 +728,16 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
             }}
             className={`w-full rounded-2xl border px-4 py-4 text-left transition ${
               buildStartMode === "manual"
-                ? "border-white/45 bg-white/18"
-                : "border-white/12 bg-white/6 hover:border-white/25 hover:bg-white/10"
+                ? "border-accent/50 bg-accent/15"
+                : "border-line bg-surface hover:border-accent/50 hover:bg-surface"
             }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-base font-semibold text-white">Continue to build manually</p>
-                <p className="mt-1 text-xs text-zinc-300/80">Search and add exercises day by day yourself.</p>
+                <p className="text-base font-semibold text-ink">Continue to build manually</p>
+                <p className="mt-1 text-xs text-muted-2">Search and add exercises day by day yourself.</p>
               </div>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${buildStartMode === "manual" ? "bg-white/20 text-white" : "bg-white/10 text-zinc-300/90"}`}>
+              <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${buildStartMode === "manual" ? "bg-accent/15 text-ink" : "bg-surface text-muted-2"}`}>
                 Flexible
               </span>
             </div>
@@ -746,16 +746,16 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
       ) : null}
 
       {step === IMPORT_SCREENSHOT_STEP ? (
-        <section className="glass-card space-y-3 rounded-2xl p-4">
+        <section className="border border-line bg-surface space-y-3 rounded-2xl p-4">
           <div>
-            <p className="text-sm font-semibold text-zinc-100">Upload screenshots</p>
-            <p className="mt-1 text-xs text-zinc-300/75">Add 1-3 screenshots, run analysis, then continue to the builder.</p>
+            <p className="text-sm font-semibold text-ink">Upload screenshots</p>
+            <p className="mt-1 text-xs text-muted-2">Add 1-3 screenshots, run analysis, then continue to the builder.</p>
           </div>
 
           {selectedScreenshotNames.length > 0 ? (
-            <div className="rounded-lg border border-white/12 bg-black/20 p-2">
-              <p className="text-xs font-semibold text-zinc-200/85">{selectedScreenshotNames.length} image{selectedScreenshotNames.length === 1 ? "" : "s"} selected</p>
-              <div className="mt-1 space-y-0.5 text-xs text-zinc-300/80">
+            <div className="rounded-lg border border-line bg-bg p-2">
+              <p className="text-xs font-semibold text-muted-2">{selectedScreenshotNames.length} image{selectedScreenshotNames.length === 1 ? "" : "s"} selected</p>
+              <div className="mt-1 space-y-0.5 text-xs text-muted-2">
                 {selectedScreenshotNames.map((name) => (
                   <p key={name}>{name}</p>
                 ))}
@@ -774,17 +774,17 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
               className="hidden"
               id="screenshot-upload"
             />
-            <span className="glass-button block cursor-pointer py-2 text-center text-sm">Choose Screenshots</span>
+            <span className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-4 font-bold text-bg disabled:opacity-50 block cursor-pointer py-2 text-center text-sm">Choose Screenshots</span>
           </label>
 
-          <p className="text-[11px] text-zinc-400/90">Tip: select multiple at once (Shift/Cmd) or add them in separate picks.</p>
+          <p className="text-[11px] text-muted-2">Tip: select multiple at once (Shift/Cmd) or add them in separate picks.</p>
 
           <div className="flex gap-2">
             <button
               type="button"
               onClick={importSelectedScreenshots}
               disabled={uploadingScreenshot || selectedScreenshotFiles.length === 0}
-              className="glass-button py-2 text-sm disabled:opacity-50"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-4 font-bold text-bg disabled:opacity-50 py-2 text-sm disabled:opacity-50"
             >
               {uploadingScreenshot ? "Analyzing..." : "Import Selected"}
             </button>
@@ -792,27 +792,27 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
               type="button"
               onClick={() => clearSelectedScreenshots()}
               disabled={uploadingScreenshot || selectedScreenshotFiles.length === 0}
-              className="glass-button-ghost py-2 text-sm disabled:opacity-50"
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-line bg-surface px-4 text-sm font-bold text-ink py-2 text-sm disabled:opacity-50"
             >
               Clear
             </button>
           </div>
 
           {hasImportedScreenshots ? (
-            <div className="rounded-lg border border-emerald-300/25 bg-emerald-500/10 p-2 text-xs text-emerald-100">
+            <div className="rounded-lg border border-accent/30 bg-accent/10 p-2 text-xs text-accent">
               Import complete. Continue to the build page to confirm and edit.
             </div>
           ) : null}
 
-          {screenshotError ? <p className="text-xs text-red-300">{screenshotError}</p> : null}
+          {screenshotError ? <p className="text-xs text-danger">{screenshotError}</p> : null}
         </section>
       ) : null}
 
       {step === FINAL_STEP ? (
-        <section className="glass-card space-y-4 rounded-2xl p-4">
+        <section className="border border-line bg-surface space-y-4 rounded-2xl p-4">
           <div>
-            <p className="text-sm font-semibold text-zinc-100">Build your week</p>
-            <p className="mt-1 text-xs text-zinc-300/80">Pick a day, add exercises, then set sets and rep ranges.</p>
+            <p className="text-sm font-semibold text-ink">Build your week</p>
+            <p className="mt-1 text-xs text-muted-2">Pick a day, add exercises, then set sets and rep ranges.</p>
           </div>
 
           <div className="flex gap-2 overflow-x-auto">
@@ -821,7 +821,7 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
                 key={`${day.label}-${i}`}
                 type="button"
                 onClick={() => setActiveDayIndex(i)}
-                className={`rounded-full px-3 py-1 text-sm transition ${i === activeDayIndex ? "bg-white/20 text-white" : "bg-white/6 text-zinc-200/85"}`}
+                className={`rounded-full px-3 py-1 text-sm transition ${i === activeDayIndex ? "bg-accent/15 text-ink" : "bg-surface text-muted-2"}`}
               >
                 {day.label}
               </button>
@@ -830,21 +830,21 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
 
           <div className="space-y-3">
             <div className="relative">
-              <input placeholder="Search exercises" value={query} onChange={(e) => setQuery(e.target.value)} className="glass-input" />
+              <input placeholder="Search exercises" value={query} onChange={(e) => setQuery(e.target.value)} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-ink outline-none focus:border-accent" />
               {(loadingSearch || query.trim().length > 0) && (
-                <div className="absolute z-10 mt-2 max-h-60 w-full overflow-y-auto rounded-xl border border-white/15 bg-zinc-950/95 p-1 shadow-xl backdrop-blur">
-                  {loadingSearch ? <p className="px-3 py-2 text-xs text-zinc-300/70">Searching...</p> : null}
-                  {!loadingSearch && results.length === 0 ? <p className="px-3 py-2 text-xs text-zinc-300/70">No matches found.</p> : null}
+                <div className="absolute z-10 mt-2 max-h-60 w-full overflow-y-auto rounded-xl border border-line bg-bg/95 p-1 shadow-xl backdrop-blur">
+                  {loadingSearch ? <p className="px-3 py-2 text-xs text-muted-2">Searching...</p> : null}
+                  {!loadingSearch && results.length === 0 ? <p className="px-3 py-2 text-xs text-muted-2">No matches found.</p> : null}
                   {!loadingSearch
                     ? results.slice(0, 8).map((exercise) => (
                         <button
                           key={exercise.id}
                           type="button"
                           onClick={() => addExercise(exercise)}
-                          className="block w-full rounded-lg px-3 py-2 text-left transition hover:bg-white/10"
+                          className="block w-full rounded-lg px-3 py-2 text-left transition hover:bg-surface"
                         >
-                          <p className="text-sm font-medium text-white">{exercise.name}</p>
-                          <p className="text-xs text-zinc-300/70">{labelize(exercise.muscleGroup)} • {labelize(exercise.movementType)}</p>
+                          <p className="text-sm font-medium text-ink">{exercise.name}</p>
+                          <p className="text-xs text-muted-2">{labelize(exercise.muscleGroup)} • {labelize(exercise.movementType)}</p>
                         </button>
                       ))
                     : null}
@@ -852,8 +852,8 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
               )}
             </div>
 
-            <div className="rounded-xl border border-white/12 bg-white/5 p-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-300/75">Recommended for {activeDay?.label}</p>
+            <div className="rounded-xl border border-line bg-surface p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-2">Recommended for {activeDay?.label}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {activeRecommendations.slice(0, 10).map((exercise) => {
                   const isAdded = !!activeDay?.exercises.some((x) => x.exerciseId === exercise.id);
@@ -864,82 +864,82 @@ export function OnboardingForm({ mode = "edit" }: { mode?: "edit" | "new" }) {
                       type="button"
                       onClick={() => addExercise(exercise)}
                       disabled={isAdded}
-                      className={`rounded-full px-3 py-1.5 text-xs transition ${isAdded ? "bg-white/10 text-zinc-400" : "bg-white/15 text-zinc-100 hover:bg-white/25"}`}
+                      className={`rounded-full px-3 py-1.5 text-xs transition ${isAdded ? "bg-surface text-muted-2" : "bg-accent/15 text-ink hover:bg-accent/15"}`}
                     >
                       {exercise.name}
                     </button>
                   );
                 })}
-                {activeRecommendations.length === 0 ? <p className="text-xs text-zinc-300/70">No day suggestions yet.</p> : null}
+                {activeRecommendations.length === 0 ? <p className="text-xs text-muted-2">No day suggestions yet.</p> : null}
               </div>
             </div>
           </div>
 
-          <details className="rounded-xl border border-white/12 bg-white/5 p-3">
-            <summary className="cursor-pointer text-sm font-semibold text-zinc-100">Add custom exercise</summary>
+          <details className="rounded-xl border border-line bg-surface p-3">
+            <summary className="cursor-pointer text-sm font-semibold text-ink">Add custom exercise</summary>
             <div className="mt-2 space-y-2">
-              <input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="Exercise name" className="glass-input" />
+              <input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="Exercise name" className="min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-ink outline-none focus:border-accent" />
               <div className="grid grid-cols-2 gap-2">
-                <select value={customMuscle} onChange={(e) => setCustomMuscle(e.target.value)} className="glass-input text-sm">
+                <select value={customMuscle} onChange={(e) => setCustomMuscle(e.target.value)} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-ink outline-none focus:border-accent text-sm">
                   {["CHEST", "BACK", "SHOULDERS", "BICEPS", "TRICEPS", "QUADS", "HAMSTRINGS", "GLUTES", "CALVES", "CORE", "FULL_BODY", "OTHER"].map((m) => (
                     <option key={m} value={m}>{labelize(m)}</option>
                   ))}
                 </select>
-                <select value={customMovement} onChange={(e) => setCustomMovement(e.target.value)} className="glass-input text-sm">
+                <select value={customMovement} onChange={(e) => setCustomMovement(e.target.value)} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-ink outline-none focus:border-accent text-sm">
                   <option value="COMPOUND">Compound</option>
                   <option value="ISOLATION">Isolation</option>
                 </select>
               </div>
-              <button type="button" onClick={createCustomExercise} className="glass-button text-sm">Create + Add</button>
+              <button type="button" onClick={createCustomExercise} className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-4 font-bold text-bg disabled:opacity-50 text-sm">Create + Add</button>
             </div>
           </details>
 
-          <div className="space-y-2 rounded-xl border border-white/12 bg-white/5 p-3">
-            <p className="text-sm font-semibold text-zinc-100">{activeDay?.label} exercises</p>
-            <p className="text-xs text-zinc-300/75">{activeDay?.exercises.length ?? 0} added</p>
+          <div className="space-y-2 rounded-xl border border-line bg-surface p-3">
+            <p className="text-sm font-semibold text-ink">{activeDay?.label} exercises</p>
+            <p className="text-xs text-muted-2">{activeDay?.exercises.length ?? 0} added</p>
             {activeDay?.exercises.length ? (
               activeDay.exercises.map((item) => (
-                <div key={item.exerciseId} className="rounded-lg border border-white/10 bg-black/20 p-3">
+                <div key={item.exerciseId} className="rounded-lg border border-line bg-bg p-3">
                   <div className="mb-2 flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-zinc-100">{item.name}</p>
-                    <button type="button" onClick={() => removeExercise(activeDayIndex, item.exerciseId)} className="text-xs text-zinc-300/80">Remove</button>
+                    <p className="text-sm font-medium text-ink">{item.name}</p>
+                    <button type="button" onClick={() => removeExercise(activeDayIndex, item.exerciseId)} className="text-xs text-muted-2">Remove</button>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <label>Sets
-                      <input type="number" min={1} max={8} value={item.targetSets} onChange={(e) => updateExercise(activeDayIndex, item.exerciseId, "targetSets", Number(e.target.value))} className="glass-input mt-1 px-2 py-1" />
+                      <input type="number" min={1} max={8} value={item.targetSets} onChange={(e) => updateExercise(activeDayIndex, item.exerciseId, "targetSets", Number(e.target.value))} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-ink outline-none focus:border-accent mt-1 px-2 py-1" />
                     </label>
                     <label>Rep Low
-                      <input type="number" min={1} max={30} value={item.targetRepRangeLow} onChange={(e) => updateExercise(activeDayIndex, item.exerciseId, "targetRepRangeLow", Number(e.target.value))} className="glass-input mt-1 px-2 py-1" />
+                      <input type="number" min={1} max={30} value={item.targetRepRangeLow} onChange={(e) => updateExercise(activeDayIndex, item.exerciseId, "targetRepRangeLow", Number(e.target.value))} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-ink outline-none focus:border-accent mt-1 px-2 py-1" />
                     </label>
                     <label>Rep High
-                      <input type="number" min={1} max={30} value={item.targetRepRangeHigh} onChange={(e) => updateExercise(activeDayIndex, item.exerciseId, "targetRepRangeHigh", Number(e.target.value))} className="glass-input mt-1 px-2 py-1" />
+                      <input type="number" min={1} max={30} value={item.targetRepRangeHigh} onChange={(e) => updateExercise(activeDayIndex, item.exerciseId, "targetRepRangeHigh", Number(e.target.value))} className="min-h-11 w-full rounded-xl border border-line bg-bg px-3 text-ink outline-none focus:border-accent mt-1 px-2 py-1" />
                     </label>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-zinc-300/70">No exercises yet for this day.</p>
+              <p className="text-sm text-muted-2">No exercises yet for this day.</p>
             )}
           </div>
         </section>
       ) : null}
 
-      {error ? <p className="text-sm text-red-300">{error}</p> : null}
+      {error ? <p className="text-sm text-danger">{error}</p> : null}
 
       <div className="flex gap-2">
         {step > 0 ? (
-          <button type="button" onClick={prevStep} className="glass-button-ghost">
+          <button type="button" onClick={prevStep} className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl border border-line bg-surface px-4 text-sm font-bold text-ink">
             Back
           </button>
         ) : null}
 
         {step < FINAL_STEP ? (
-          <button type="button" onClick={nextStep} className="glass-button" disabled={!canContinueCurrentStep()}>
+          <button type="button" onClick={nextStep} className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-4 font-bold text-bg disabled:opacity-50" disabled={!canContinueCurrentStep()}>
             {step === IMPORT_SCREENSHOT_STEP ? "Continue to Build Page" : "Continue"}
           </button>
         ) : (
-          <button disabled={saving} className="glass-button disabled:opacity-50">
-            {saving ? "Saving..." : mode === "new" ? "Save New Split" : "Update Routine"}
+          <button disabled={saving} className="inline-flex min-h-12 w-full items-center justify-center rounded-2xl bg-accent px-4 font-bold text-bg disabled:opacity-50 disabled:opacity-50">
+            {saving ? "Saving..." : isFirstTime ? "Save plan" : mode === "new" ? "Save New Split" : "Update Routine"}
           </button>
         )}
       </div>

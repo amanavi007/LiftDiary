@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { jsonFetch } from "@/lib/client";
+
+const inputClass =
+  "min-h-12 w-full rounded-xl border border-line bg-surface px-4 text-base text-ink outline-none transition focus:border-accent";
 
 export function AuthForm({ mode }: { mode: "login" | "signup" }) {
   const router = useRouter();
@@ -16,65 +20,68 @@ export function AuthForm({ mode }: { mode: "login" | "signup" }) {
     event.preventDefault();
     setLoading(true);
     setError(null);
-
     try {
-      await jsonFetch(`/api/auth/${mode}`, {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
+      await jsonFetch(`/api/auth/${mode}`, { method: "POST", body: JSON.stringify({ email, password }) });
       router.push("/");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed");
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form onSubmit={onSubmit} className="glass-card-strong space-y-3 rounded-2xl p-5">
-      <h1 className="text-2xl font-bold text-white">{mode === "login" ? "Welcome back" : "Create account"}</h1>
-      <p className="text-sm text-zinc-200/80">LiftDiary keeps your sessions fast and coach-driven.</p>
+    <div className="mx-auto w-full max-w-sm pt-10 lg:pt-24">
+      <p className="font-serif text-4xl leading-none">
+        Lift<i className="text-accent">Diary</i>
+      </p>
+      <h1 className="mt-8 font-serif text-5xl leading-[0.95]">{mode === "login" ? "Welcome back." : "Start lifting smarter."}</h1>
+      <p className="mt-3 text-sm text-muted-2">Fast set logging with a coach that learns your numbers.</p>
 
-      <label className="block text-sm">
-        <span className="mb-1 block text-zinc-100/90">Email</span>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="glass-input"
-        />
-      </label>
+      <form onSubmit={onSubmit} className="mt-8 space-y-4">
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-bold uppercase tracking-[0.12em] text-muted">Email</span>
+          <input
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-bold uppercase tracking-[0.12em] text-muted">Password</span>
+          <input
+            type="password"
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={mode === "signup" ? 8 : 1}
+            className={inputClass}
+          />
+          {mode === "signup" ? <span className="mt-1 block text-xs text-muted">At least 8 characters.</span> : null}
+        </label>
 
-      <label className="block text-sm">
-        <span className="mb-1 block text-zinc-100/90">Password</span>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={mode === "signup" ? 8 : 1}
-          className="glass-input"
-        />
-      </label>
+        {error ? (
+          <p role="alert" className="text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
 
-      {error ? <p className="text-sm text-red-400">{error}</p> : null}
+        <Button type="submit" size="lg" disabled={loading}>
+          {loading ? "Please wait…" : mode === "login" ? "Log in" : "Create account"}
+        </Button>
+      </form>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="glass-button"
-      >
-        {loading ? "Please wait..." : mode === "login" ? "Log In" : "Sign Up"}
-      </button>
-
-      <p className="text-center text-sm text-zinc-200/75">
+      <p className="mt-6 text-center text-sm text-muted-2">
         {mode === "login" ? "Need an account?" : "Already have an account?"}{" "}
-        <Link href={mode === "login" ? "/signup" : "/login"} className="text-orange-200 underline">
+        <Link href={mode === "login" ? "/signup" : "/login"} className="font-bold text-accent underline">
           {mode === "login" ? "Sign up" : "Log in"}
         </Link>
       </p>
-    </form>
+    </div>
   );
 }
