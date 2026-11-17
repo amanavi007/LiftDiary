@@ -14,6 +14,10 @@ LiftDiary is an older personal project: a mobile-first Next.js app that logs wor
 - **Screens shown in mockups (target look):** Home (wordmark, "Today" + day title, readiness ring with one-line coach note, lift list showing last time vs today with up/hold/down, big Start button), workout logger (exercise title, coach suggestion line, set rows with big weight/rep boxes and a large check button, current set outlined in lime, auto-starting rest timer with +15s/Skip, "Next: …" bar in the thumb zone), post-workout summary (time/volume/PR tiles, PR highlight with mini trend, per-lift up/hold/down list).
 - **Build approach: B.** Build shared building blocks first, then rebuild each screen on them.
 
+## Added requirement: works on any device (owner, 2026-11-17)
+
+The app currently shows the phone layout on every screen size. It must be usable on laptop and phone. Design (my call, owner can veto): below 1024px keep the phone layout with the bottom tab bar; at 1024px and up replace it with a left sidebar (wordmark and the four destinations), widen the content column (max about 1024px), and use two columns where it helps: Home (readiness and plan beside the lift list), the logger (exercise queue beside the active exercise), History and Progress (card grids). Tap targets stay large; hover and keyboard focus states are added for desktop.
+
 ## Approaches considered
 
 - A. Restyle in place: fastest but leaves old glass styles and the 1,000-line logger tangled.

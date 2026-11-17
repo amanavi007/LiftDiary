@@ -17,6 +17,7 @@
 - Phone-first, content max width about 448px (`max-w-md`), safe-area insets respected, tap targets in the logger at least 52px tall.
 - Do not create test data in the hosted Neon database from `.env`. Use a local Postgres; Prisma CLI reads `.env`, so pass `DATABASE_URL=...` inline for db commands and use `.env.local` for `next dev`.
 - No rewrite of `recommendation.ts`, auth, or `prisma/schema.prisma` unless a bug found in Task 1 requires it.
+- Responsive: phone layout below 1024px (bottom nav); at `lg` (1024px) and up a left sidebar nav, content max about `max-w-5xl`, two-column layouts on Home, logger, History and Progress. Every screen task verifies at 390x844 and 1440x900.
 - No light theme, no social features, no badges. Streak stays small.
 - Commit after each task; commit messages end with the Co-Authored-By line given in the session.
 
@@ -28,6 +29,7 @@
 - Users on KG see KG everywhere, including trend labels and plate suggestions.
 - A routine with no days or an exercise with no history renders Home and Summary without crashing ("new" instead of up/down).
 - Very long exercise names and 4-digit weights do not break the set rows or the list.
+- Wide screens (1440px) show the sidebar and two-column layouts with no stretched or lopsided content; phone widths show no horizontal scroll.
 - Day boundaries use the user's local day (streak and weekly strip), not UTC.
 
 ---
