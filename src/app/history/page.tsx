@@ -1,54 +1,24 @@
 import Link from "next/link";
 import { ScreenShell } from "@/components/screen-shell";
+import { buttonClass } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Pill } from "@/components/ui/pill";
+import { SectionLabel } from "@/components/ui/section-label";
+import { StatTile } from "@/components/ui/stat-tile";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-type SessionSet = {
-  id: string;
-  exerciseId: string;
-  setIndex: number;
-  reps: number;
-  weight: number;
-  isFailed: boolean;
-  exercise: {
-    name: string;
-  };
-};
-
 function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(value);
+  return new Intl.DateTimeFormat("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" }).format(value);
 }
 
-function sessionDurationMinutes(startedAt: Date, endedAt: Date | null) {
-  if (!endedAt) return null;
-  return Math.max(1, Math.round((endedAt.getTime() - startedAt.getTime()) / 60000));
-}
-
-function formatCompactNumber(value: number) {
+function compact(value: number) {
   return new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(value);
-}
-
-function groupSetsByExercise(sets: SessionSet[]) {
-  const map = new Map<string, { name: string; sets: SessionSet[] }>();
-
-  for (const set of sets) {
-    const current = map.get(set.exerciseId) ?? { name: set.exercise.name, sets: [] };
-    current.sets.push(set);
-    map.set(set.exerciseId, current);
-  }
-
-  return Array.from(map.values());
 }
 
 export default async function HistoryPage({ searchParams }: { searchParams: Promise<{ day?: string }> }) {
   const user = await requireUser();
-  const params = await searchParams;
-  const day = params.day;
-
+  const { day } = await searchParams;
   const routine = user.routines[0];
 
   const sessions = await prisma.workoutSession.findMany({
@@ -56,136 +26,122 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
       userId: user.id,
       ...(day ? { routineDayId: day } : {}),
       endedAt: { not: null },
+      sets: { some: {} }, // sessions finished with nothing logged are noise
     },
     include: {
       routineDay: true,
-      sets: {
-        include: { exercise: true },
-        orderBy: [{ exerciseId: "asc" }, { setIndex: "asc" }],
-      },
+      sets: { include: { exercise: true }, orderBy: [{ exerciseId: "asc" }, { setIndex: "asc" }] },
     },
     orderBy: { startedAt: "desc" },
     take: 50,
   });
 
-  const totalSessions = sessions.length;
-  const totalSets = sessions.reduce((sum, session) => sum + session.sets.length, 0);
-  const totalVolume = sessions.reduce(
-    (sum, session) => sum + session.sets.reduce((setSum, set) => setSum + set.weight * set.reps, 0),
-    0,
-  );
+  const totalSets = sessions.reduce((sum, s) => sum + s.sets.length, 0);
+  const totalVolume = sessions.reduce((sum, s) => sum + s.sets.reduce((v, x) => v + x.weight * x.reps, 0), 0);
+  const weekAgo = new Date(new Date().getTime() - 7 * 86_400_000);
+  const lastWeek = sessions.filter((s) => s.startedAt >= weekAgo).length;
 
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const sessionsThisWeek = sessions.filter((session) => session.startedAt >= sevenDaysAgo).length;
+  const chip = (active: boolean) =>
+    `inline-flex min-h-9 items-center rounded-full px-4 text-xs font-bold transition ${
+      active ? "bg-accent text-bg" : "bg-line text-muted-2 hover:text-ink"
+    }`;
 
   return (
-    <ScreenShell>
-      <h1 className="mb-2 text-3xl font-bold text-white">Workout History</h1>
-      <p className="mb-3 text-sm text-zinc-200/75">Quick overview first, then open any session to view exercise and set details.</p>
+    <ScreenShell showBack={false}>
+      <div>
+        <SectionLabel>History</SectionLabel>
+        <h1 className="mt-1 font-serif text-5xl leading-[0.95] lg:text-6xl">Your sessions</h1>
+      </div>
 
       {sessions.length > 0 ? (
-        <section className="mb-3 grid grid-cols-2 gap-2 text-xs">
-          <div className="glass-card rounded-xl px-3 py-2.5">
-            <p className="text-zinc-300/70">Sessions</p>
-            <p className="text-base font-semibold text-zinc-100">{totalSessions}</p>
-          </div>
-          <div className="glass-card rounded-xl px-3 py-2.5">
-            <p className="text-zinc-300/70">Last 7 Days</p>
-            <p className="text-base font-semibold text-zinc-100">{sessionsThisWeek}</p>
-          </div>
-          <div className="glass-card rounded-xl px-3 py-2.5">
-            <p className="text-zinc-300/70">Total Sets</p>
-            <p className="text-base font-semibold text-zinc-100">{totalSets}</p>
-          </div>
-          <div className="glass-card rounded-xl px-3 py-2.5">
-            <p className="text-zinc-300/70">Volume</p>
-            <p className="text-base font-semibold text-zinc-100">{formatCompactNumber(Math.round(totalVolume))}</p>
-          </div>
-        </section>
+        <div className="grid grid-cols-4 gap-2">
+          <StatTile value={String(sessions.length)} label="Sessions" />
+          <StatTile value={String(lastWeek)} label="Last 7d" tone={lastWeek ? "accent" : "default"} />
+          <StatTile value={compact(totalSets)} label="Sets" />
+          <StatTile value={compact(Math.round(totalVolume))} label="Volume" />
+        </div>
       ) : null}
 
-      <div className="mb-3 flex flex-wrap gap-2 text-xs">
-        <Link href="/history" className={`glass-pill px-3 py-1 ${!day ? "bg-white/20 text-white" : "text-zinc-200/85"}`}>
+      <div className="flex gap-1.5 overflow-x-auto">
+        <Link href="/history" className={chip(!day)}>
           All
         </Link>
         {routine?.days.map((d) => (
-          <Link key={d.id} href={`/history?day=${d.id}`} className={`glass-pill px-3 py-1 ${day === d.id ? "bg-white/20 text-white" : "text-zinc-200/85"}`}>
+          <Link key={d.id} href={`/history?day=${d.id}`} className={chip(day === d.id)}>
             {d.label}
           </Link>
         ))}
       </div>
 
-      <div className="space-y-3 pb-24">
-        {sessions.length === 0 ? (
-          <div className="glass-card rounded-2xl p-4 text-sm text-zinc-200/80">
-            <p>No sessions yet. Start your first workout to build your history.</p>
-            <div className="mt-2 flex gap-2 text-xs">
-              <Link href="/workout/start" className="glass-pill px-3 py-1 text-zinc-100">
-                Start Workout
-              </Link>
-              <Link href="/home" className="glass-pill px-3 py-1 text-zinc-200/90">
-                Back to Home
-              </Link>
-            </div>
-          </div>
-        ) : null}
-        {sessions.map((session) => {
-          const grouped = groupSetsByExercise(session.sets);
-          const duration = sessionDurationMinutes(session.startedAt, session.endedAt);
-          const volume = session.sets.reduce((sum, set) => sum + set.weight * set.reps, 0);
-          const failedSets = session.sets.filter((set) => set.isFailed).length;
-          const topExercises = grouped.slice(0, 3).map((exercise) => exercise.name);
+      {sessions.length === 0 ? (
+        <Card className="space-y-3">
+          <p className="text-sm text-muted-2">No sessions yet. Start your first workout to build your history.</p>
+          <Link href="/home" className={`${buttonClass("primary")} max-w-xs`}>
+            Go to Home
+          </Link>
+        </Card>
+      ) : (
+        <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-4 lg:space-y-0">
+          {sessions.map((session) => {
+            const groups = new Map<string, { name: string; sets: typeof session.sets }>();
+            for (const set of session.sets) {
+              const g = groups.get(set.exerciseId) ?? { name: set.exercise.name, sets: [] };
+              g.sets.push(set);
+              groups.set(set.exerciseId, g);
+            }
+            const exercises = [...groups.values()];
+            const volume = session.sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
+            const failed = session.sets.filter((s) => s.isFailed).length;
+            const minutes = session.endedAt
+              ? Math.max(1, Math.round((session.endedAt.getTime() - session.startedAt.getTime()) / 60000))
+              : null;
+            const unit = session.unitsSnapshot.toLowerCase();
 
-          return (
-            <article key={session.id} className="glass-card rounded-2xl p-4">
-              <div className="mb-2 flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-base font-semibold text-white">{session.routineDay.label}</p>
-                  <p className="text-xs text-zinc-300/80">{formatDate(session.startedAt)}</p>
+            return (
+              <Card key={session.id} className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-serif text-3xl leading-none">{session.routineDay.label}</p>
+                    <p className="mt-1 text-xs text-muted-2">{formatDate(session.startedAt)}</p>
+                  </div>
+                  <Pill>{exercises.length} exercises</Pill>
                 </div>
-                <span className="glass-pill px-2 py-1 text-[11px] text-zinc-100">{grouped.length} exercises</span>
-              </div>
-
-              <div className="mb-2 rounded-xl border border-white/12 bg-white/6 px-3 py-2 text-xs text-zinc-200/85">
-                <p>
-                  {session.sets.length} sets • {formatCompactNumber(Math.round(volume))} volume • {duration ? `${duration} min` : "No duration"}
-                  {failedSets > 0 ? ` • ${failedSets} failed` : ""}
+                <p className="tabular text-xs text-muted-2">
+                  {session.sets.length} sets · {compact(Math.round(volume))} {unit} volume · {minutes ? `${minutes} min` : "no duration"}
+                  {failed > 0 ? ` · ${failed} failed` : ""}
                 </p>
-              </div>
-
-              <p className="mb-2 text-xs text-zinc-300/80">
-                {topExercises.join(" • ")}
-                {grouped.length > 3 ? ` • +${grouped.length - 3} more` : ""}
-              </p>
-
-              <details className="rounded-xl border border-white/12 bg-white/6 p-3">
-                <summary className="cursor-pointer list-none text-sm font-semibold text-zinc-100">View details</summary>
-
-                <div className="mt-3 space-y-2">
-                  {grouped.map((exercise) => (
-                    <div key={`${session.id}-${exercise.name}`} className="rounded-lg border border-white/10 bg-black/20 p-2.5">
-                      <div className="mb-1 flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium text-zinc-100">{exercise.name}</p>
-                        <span className="text-[11px] text-zinc-300/80">{exercise.sets.length} sets</span>
+                <details className="group rounded-xl bg-bg p-3">
+                  <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between text-sm font-bold">
+                    <span className="truncate text-muted-2 group-open:text-ink">
+                      {exercises.slice(0, 3).map((e) => e.name).join(" · ")}
+                      {exercises.length > 3 ? ` · +${exercises.length - 3}` : ""}
+                    </span>
+                    <span aria-hidden className="ml-2 text-muted">▾</span>
+                  </summary>
+                  <div className="mt-3 space-y-3">
+                    {exercises.map((ex) => (
+                      <div key={`${session.id}-${ex.name}`}>
+                        <p className="text-sm font-bold">{ex.name}</p>
+                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                          {ex.sets.map((set) => (
+                            <span
+                              key={set.id}
+                              className={`tabular rounded-lg bg-surface px-2 py-1 text-[11px] ${set.isFailed ? "text-warn" : "text-muted-2"}`}
+                            >
+                              {set.weight} × {set.reps}
+                              {set.isFailed ? " · failed" : ""}
+                            </span>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-1.5 text-[11px] text-zinc-200/85">
-                        {exercise.sets.map((set) => (
-                          <span key={set.id} className="rounded-md border border-white/12 bg-white/6 px-2 py-0.5">
-                            {set.setIndex}: {set.weight} {session.unitsSnapshot} × {set.reps}
-                            {set.isFailed ? " • F" : ""}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </details>
-
-            </article>
-          );
-        })}
-      </div>
+                    ))}
+                  </div>
+                </details>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </ScreenShell>
   );
 }
