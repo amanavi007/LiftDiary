@@ -11,3 +11,5 @@ Tested against the hosted DB with a throwaway account (`claude-redesign-test@lif
 4. Cosmetic (replaced by redesign): glass cards, blur blobs, nav overlapping content at the bottom, plain "Log Set" form-style logger.
 
 **Not tested:** signup/onboarding UI (needs a fresh account; Task 9) and the screenshot-import route (needs OpenAI key, only on request).
+
+**Found during Task 6:** logging a set for a swapped-in exercise was rejected (400 "Exercise not in this routine") and swapped sets never showed in the queue counts. Fixed: the API accepts library/own custom exercises outside the day, and the client tracks swapped sets locally. Verified via API: first set 201, duplicate 409, unknown id 400.
