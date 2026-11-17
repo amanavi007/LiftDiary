@@ -17,7 +17,7 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: "LiftDiary",
-  description: "Mobile-first workout assistant with hybrid ML recommendations",
+  description: "A workout log with a coach that learns your numbers",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
@@ -29,6 +29,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
+  themeColor: "#101114",
 };
 
 export default function RootLayout({

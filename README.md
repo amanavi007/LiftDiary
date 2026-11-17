@@ -1,6 +1,6 @@
 # LiftDiary MVP
 
-Mobile-first workout assistant with hybrid recommendations (calibration mode + deterministic fallback + lightweight ML regression).
+Workout log and coach that works on phone and laptop, with hybrid recommendations (calibration mode + deterministic fallback + lightweight ML regression), a readiness score, per-lift trends, undo, and CSV export.
 
 ## Stack
 
@@ -9,6 +9,12 @@ Mobile-first workout assistant with hybrid recommendations (calibration mode + d
 - Cookie session auth (JWT + bcrypt)
 - Recharts for PR trend charts
 - Vitest for core logic tests
+
+## Design system
+
+Dark, flat UI: near-black `#101114`, one lime accent `#c6ff3d`, Instrument Serif (headlines and numerals) and DM Sans (body). Tokens live in `src/app/globals.css` (`bg`, `surface`, `line`, `ink`, `muted`, `accent`, `warn`, `danger`); shared pieces are in `src/components/ui/`. Below 1024px the app uses a phone layout with a bottom tab bar; at 1024px and up it uses a left sidebar and two-column screens.
+
+Pure, unit-tested logic worth knowing: `src/lib/readiness.ts` (0-100 readiness score), `trend.ts` (up/hold/down), `streak.ts`, `week.ts`, `progress.ts`, `deload.ts`, `csv.ts`, `rest-timer.ts`, `workout-helpers.ts`.
 
 ## System Architecture
 
@@ -63,6 +69,10 @@ npm run db:seed
 ```bash
 npm run dev
 ```
+
+## Local development against a throwaway database
+
+`.env` may point at a hosted database. For experiments, run a local Postgres and start the app with `DATABASE_URL=postgresql://... npm run dev`, after `DATABASE_URL=... npm run db:push && DATABASE_URL=... npm run db:seed`. `npx tsx scripts/create-test-account.ts` creates a demo account (email and password are printed when it finishes).
 
 ## Tests
 

@@ -104,10 +104,12 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                     <p className="font-serif text-3xl leading-none">{session.routineDay.label}</p>
                     <p className="mt-1 text-xs text-muted-2">{formatDate(session.startedAt)}</p>
                   </div>
-                  <Pill>{exercises.length} exercises</Pill>
+                  <Pill>
+                    {exercises.length} exercise{exercises.length === 1 ? "" : "s"}
+                  </Pill>
                 </div>
                 <p className="tabular text-xs text-muted-2">
-                  {session.sets.length} sets · {compact(Math.round(volume))} {unit} volume · {minutes ? `${minutes} min` : "no duration"}
+                  {session.sets.length} set{session.sets.length === 1 ? "" : "s"} · {compact(Math.round(volume))} {unit} volume · {minutes ? `${minutes} min` : "no duration"}
                   {failed > 0 ? ` · ${failed} failed` : ""}
                 </p>
                 <details className="group rounded-xl bg-bg p-3">
