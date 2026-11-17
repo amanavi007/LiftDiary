@@ -10,22 +10,23 @@ const links = [
   { href: "/settings", label: "Settings" },
 ];
 
-export function MobileNav() {
+export function BottomNav() {
   const pathname = usePathname();
-
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 px-3 pb-safe pt-2">
-      <ul className="mx-auto grid max-w-md grid-cols-4 gap-2 rounded-2xl border border-white/25 bg-zinc-950/95 p-2 shadow-2xl backdrop-blur-xl">
+    <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line bg-bg/95 backdrop-blur">
+      <ul className="mx-auto grid max-w-md grid-cols-4">
         {links.map((link) => {
           const active = pathname.startsWith(link.href);
           return (
             <li key={link.href}>
               <Link
                 href={link.href}
-                className={`block rounded-xl px-2 py-2 text-center text-xs font-semibold transition ${
-                  active ? "bg-white/20 text-white" : "text-zinc-300/90 hover:bg-white/8"
+                aria-current={active ? "page" : undefined}
+                className={`flex min-h-14 flex-col items-center justify-center gap-1 text-[11px] font-bold ${
+                  active ? "text-accent" : "text-muted"
                 }`}
               >
+                <span className={`h-1 w-5 rounded-full ${active ? "bg-accent" : "bg-transparent"}`} />
                 {link.label}
               </Link>
             </li>
