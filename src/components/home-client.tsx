@@ -144,6 +144,15 @@ export function HomeClient({ data }: { data: HomeData }) {
           </div>
         </Card>
 
+        {day.deload ? (
+          <Card tone="accent">
+            <p className="text-sm font-bold">Consider a lighter week</p>
+            <p className="mt-0.5 text-xs text-muted-2">
+              Readiness is low and several recent sets failed. Dropping weights about 10% for a few sessions can help you come back stronger.
+            </p>
+          </Card>
+        ) : null}
+
         {time ? (
           <Card className="py-3">
             <div className="flex items-center justify-between">

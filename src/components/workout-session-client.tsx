@@ -200,6 +200,40 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
     }
   }
 
+  async function undoSet() {
+    if (submittingRef.current || !session || !active) return;
+    const id = active.exercise.id;
+    const before = loggedOf(active);
+    if (before.length === 0) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await jsonFetch(`/api/sessions/${sessionId}/sets`, {
+        method: "DELETE",
+        body: JSON.stringify({ exerciseId: displayOf(active).id }),
+      });
+      let remaining: LoggedSet[];
+      if (swapBy[id]) {
+        const extras = (extraSets[id] ?? []).slice(0, -1);
+        setExtraSets((prev) => ({ ...prev, [id]: extras }));
+        remaining = [...active.loggedSets, ...extras];
+      } else {
+        const fresh = await refreshSession();
+        remaining = fresh.exercises.find((e) => e.exercise.id === id)?.loggedSets ?? before.slice(0, -1);
+      }
+      const sug = getNextSetSuggestion({ ...active, loggedSets: remaining }, session.units);
+      setSetInputs((prev) => ({ ...prev, [id]: { weight: sug.weight, reps: sug.reps, isFailed: false } }));
+      setRest(null);
+      setActiveId(id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not undo set");
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  }
+
   async function finishWorkout() {
     if (finishing) return;
     setFinishing(true);
@@ -302,6 +336,7 @@ export function WorkoutSessionClient({ sessionId }: { sessionId: string }) {
             submitting={submitting}
             onInputChange={(next) => setSetInputs((prev) => ({ ...prev, [activeId]: next }))}
             onLog={logSet}
+            onUndo={undoSet}
             onOpenGuide={() => setGuideOpen(true)}
           />
 

@@ -20,6 +20,7 @@ export function ActiveExercise({
   submitting,
   onInputChange,
   onLog,
+  onUndo,
   onOpenGuide,
 }: {
   position: string;
@@ -35,6 +36,7 @@ export function ActiveExercise({
   submitting: boolean;
   onInputChange: (next: SetInput) => void;
   onLog: () => void;
+  onUndo: () => void;
   onOpenGuide: () => void;
 }) {
   const [showPlates, setShowPlates] = useState(false);
@@ -101,6 +103,17 @@ export function ActiveExercise({
           );
         })}
       </div>
+
+      {logged.length > 0 ? (
+        <button
+          type="button"
+          onClick={onUndo}
+          disabled={submitting}
+          className="min-h-10 rounded-full bg-line px-4 text-xs font-bold text-muted-2 disabled:opacity-50"
+        >
+          ↶ Undo set {logged.length}
+        </button>
+      ) : null}
 
       {complete ? (
         <p className="rounded-2xl border border-accent/30 bg-accent/10 px-4 py-3 text-sm font-bold text-accent">

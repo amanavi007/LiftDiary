@@ -99,3 +99,34 @@ export async function POST(request: Request, context: { params: Promise<{ sessio
 
   return NextResponse.json({ set, pr }, { status: 201 });
 }
+
+const undoSchema = z.object({ exerciseId: z.string().min(1) });
+
+/** Undo: removes the most recently logged set of an exercise in a still-open session. */
+export async function DELETE(request: Request, context: { params: Promise<{ sessionId: string }> }) {
+  const auth = await requireApiUserId();
+  if (auth instanceof Response) return auth;
+
+  const { sessionId } = await context.params;
+  const parsed = undoSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  const session = await prisma.workoutSession.findFirst({
+    where: { id: sessionId, userId: auth },
+    select: { id: true, endedAt: true },
+  });
+  if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 });
+  if (session.endedAt) return NextResponse.json({ error: "Workout already finished" }, { status: 409 });
+
+  const last = await prisma.setEntry.findFirst({
+    where: { sessionId, exerciseId: parsed.data.exerciseId },
+    orderBy: { setIndex: "desc" },
+    select: { id: true, setIndex: true },
+  });
+  if (!last) return NextResponse.json({ error: "No set to undo" }, { status: 404 });
+
+  await prisma.setEntry.delete({ where: { id: last.id } });
+  return NextResponse.json({ removedSetIndex: last.setIndex });
+}

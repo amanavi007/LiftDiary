@@ -161,6 +161,12 @@ export function SettingsForm({
             Add new split
           </Link>
           <div className="pt-2">
+            <SectionLabel>Data</SectionLabel>
+            <a href="/api/export" download className={`${buttonClass("ghost")} mt-3`}>
+              Export history (CSV)
+            </a>
+          </div>
+          <div className="pt-2">
             <SectionLabel>Account</SectionLabel>
             <Button variant="ghost" onClick={logout} className="mt-3">
               Log out

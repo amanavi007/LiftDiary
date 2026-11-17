@@ -1,5 +1,6 @@
 import { buildRecommendation } from "@/lib/recommendation";
 import { prisma } from "@/lib/prisma";
+import { shouldSuggestDeload } from "@/lib/deload";
 import { computeReadiness, type Readiness } from "@/lib/readiness";
 import { liftTrend, type LiftTrend } from "@/lib/trend";
 import type { getCurrentUser } from "@/lib/auth";
@@ -17,7 +18,7 @@ export type HomeLift = {
   trend: LiftTrend;
 };
 
-export type HomeDay = { id: string; label: string; lifts: HomeLift[]; readiness: Readiness };
+export type HomeDay = { id: string; label: string; lifts: HomeLift[]; readiness: Readiness; deload: boolean };
 
 export type HomeData = {
   units: "LB" | "KG";
@@ -62,10 +63,13 @@ export async function loadHomeData(user: User): Promise<HomeData> {
     sets: s.sets.map((x) => ({ weight: x.weight, reps: x.reps, isFailed: x.isFailed })),
   }));
 
-  const days: HomeDay[] = routineDays.map((day) => ({
+  const days: HomeDay[] = routineDays.map((day) => {
+    const readiness = computeReadiness({ now, targetDayId: day.id, sessions: readinessSessions });
+    return {
     id: day.id,
     label: day.label,
-    readiness: computeReadiness({ now, targetDayId: day.id, sessions: readinessSessions }),
+    readiness,
+    deload: shouldSuggestDeload(readinessSessions, readiness.score),
     lifts: day.exercises.map((rde) => {
       const history = chronological
         .filter((s) => s.sets.some((x) => x.exerciseId === rde.exerciseId))
@@ -99,7 +103,8 @@ export async function loadHomeData(user: User): Promise<HomeData> {
         trend: liftTrend(rec.recommendedWeight, lastWeight),
       };
     }),
-  }));
+    };
+  });
 
   return {
     units: user.units,
