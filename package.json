@@ -1,6 +1,7 @@
 {
   "name": "liftdiary",
   "version": "0.1.0",
+  "description": "A workout log with a coach that learns your numbers: Next.js, Prisma, and a hybrid weight-recommendation engine.",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -43,5 +44,8 @@
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
+  },
+  "engines": {
+    "node": ">=20.9"
   }
 }

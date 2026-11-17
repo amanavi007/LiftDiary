@@ -1,12 +1,12 @@
 # LiftDiary redesign: design
 
-Date: 2026-11-17. Status: awaiting approval.
+Date: 2026-11-17. Status: implemented.
 
 ## Intent and why
 
-LiftDiary is an older personal project: a mobile-first Next.js app that logs workouts and recommends weights. The owner thinks the visual design is "terrible" (dark glass cards with red/orange blur blobs) and is unsure how well the functionality still works. They want a full visual redesign chosen from mockups, then a functionality check, then some useful new features. The app is used at the gym on a phone, mid-set, often one-handed.
+LiftDiary is an older personal project: a mobile-first Next.js app that logs workouts and recommends weights. The original visual design (dark glass cards with red/orange blur blobs) was weak, and it was unclear how well the functionality held up. The goal: a full visual redesign chosen from mockups, then a functionality check, then some useful new features. The app is used at the gym on a phone, mid-set, often one-handed.
 
-## Decisions the owner made (from mockups and research)
+## Decisions (from mockups and UX research)
 
 - **Layout:** WHOOP-style. The first screen answers one question ("what do I do today and am I ready?"), then drills down: today, then trends, then per-lift detail.
 - **Typography:** Instrument Serif for headlines and numerals, DM Sans for body and labels. (Chosen over Barlow Condensed, Archivo Expanded, and Space Grotesk/JetBrains Mono.)
@@ -14,9 +14,9 @@ LiftDiary is an older personal project: a mobile-first Next.js app that logs wor
 - **Screens shown in mockups (target look):** Home (wordmark, "Today" + day title, readiness ring with one-line coach note, lift list showing last time vs today with up/hold/down, big Start button), workout logger (exercise title, coach suggestion line, set rows with big weight/rep boxes and a large check button, current set outlined in lime, auto-starting rest timer with +15s/Skip, "Next: …" bar in the thumb zone), post-workout summary (time/volume/PR tiles, PR highlight with mini trend, per-lift up/hold/down list).
 - **Build approach: B.** Build shared building blocks first, then rebuild each screen on them.
 
-## Added requirement: works on any device (owner, 2026-11-17)
+## Added requirement: works on any device
 
-The app currently shows the phone layout on every screen size. It must be usable on laptop and phone. Design (my call, owner can veto): below 1024px keep the phone layout with the bottom tab bar; at 1024px and up replace it with a left sidebar (wordmark and the four destinations), widen the content column (max about 1024px), and use two columns where it helps: Home (readiness and plan beside the lift list), the logger (exercise queue beside the active exercise), History and Progress (card grids). Tap targets stay large; hover and keyboard focus states are added for desktop.
+The app currently shows the phone layout on every screen size. It must be usable on laptop and phone. Design : below 1024px keep the phone layout with the bottom tab bar; at 1024px and up replace it with a left sidebar (wordmark and the four destinations), widen the content column (max about 1024px), and use two columns where it helps: Home (readiness and plan beside the lift list), the logger (exercise queue beside the active exercise), History and Progress (card grids). Tap targets stay large; hover and keyboard focus states are added for desktop.
 
 ## Approaches considered
 
@@ -48,7 +48,7 @@ The app currently shows the phone layout on every screen size. It must be usable
 ## Constraints
 
 - Existing stack: Next.js 16 App Router, React 19, Tailwind 4, Prisma on Postgres, Recharts, Vitest. Fonts via `next/font/google` (Instrument Serif, DM Sans).
-- `.env` points at the owner's hosted Neon Postgres. **Do not create test data there.** My call (unconfirmed): test against a separate local Postgres; if that is not possible, ask before touching the hosted DB.
+- `.env` may point at a hosted Postgres. **Avoid creating test data there.** Prefer a separate local Postgres for testing.
 - Phone-first, max width about 448px, safe-area insets respected, tabular numerals for weights.
 
 ## Work breakdown (order)
@@ -60,7 +60,7 @@ The app currently shows the phone layout on every screen size. It must be usable
 5. **Up/hold/down per lift:** compare today's recommended weight to last session's top set on Home; compare this session's top set to the previous on the summary.
 6. **Verification:** tests for new logic, browser walk-through at phone size, screenshots compared to mockups.
 
-## Proposed extra features (owner to veto or approve; all optional)
+## Proposed extra features (all optional)
 
 - Estimated 1RM shown on the progress page and PR highlights.
 - Undo last set / edit a logged set in place.

@@ -1,11 +1,12 @@
 /**
- * Creates a demo test account with:
+ * Creates a demo account (for local development and screenshots) with:
  * - Complete onboarding (PPL split, Hypertrophy goal, Intermediate)
  * - 10 completed workout sessions spanning last 5 weeks
  * - Progressive overload simulated across all exercises
  * - Calibration complete
  *
- * Run with: npx tsx scripts/create-test-account.ts
+ * Run with:  npx tsx --env-file=.env scripts/create-demo-account.ts
+ * Override the credentials with DEMO_EMAIL / DEMO_PASSWORD. Only that one account is replaced.
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -13,8 +14,8 @@ import { hash } from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-const EMAIL = "demo@liftdiary.app";
-const PASSWORD = "LiftDemo2026!";
+const EMAIL = process.env.DEMO_EMAIL ?? "demo@liftdiary.app";
+const PASSWORD = process.env.DEMO_PASSWORD ?? "LiftDemo2026!";
 
 function daysAgo(n: number) {
   const d = new Date();
