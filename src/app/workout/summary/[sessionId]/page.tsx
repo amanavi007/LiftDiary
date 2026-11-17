@@ -1,27 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ScreenShell } from "@/components/screen-shell";
+import { buttonClass } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { SectionLabel } from "@/components/ui/section-label";
+import { StatTile } from "@/components/ui/stat-tile";
+import { requireUser } from "@/lib/auth";
 import { estimated1RM } from "@/lib/pr";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth";
+import { liftTrend } from "@/lib/trend";
 
-function confidenceLabel(score: number): { label: string; color: string } {
-  if (score >= 0.8) return { label: "High confidence", color: "text-emerald-400" };
-  if (score >= 0.6) return { label: "Building confidence", color: "text-amber-400" };
-  return { label: "Calibrating", color: "text-zinc-400" };
-}
-
-function trendArrow(currentE1RM: number, prevE1RM: number | null): { symbol: string; color: string } {
-  if (prevE1RM === null) return { symbol: "→", color: "text-zinc-400" };
-  const delta = currentE1RM - prevE1RM;
-  if (delta > 1) return { symbol: "↑", color: "text-emerald-400" };
-  if (delta < -1) return { symbol: "↓", color: "text-red-400" };
-  return { symbol: "→", color: "text-zinc-400" };
-}
-
-function sessionDurationMinutes(startedAt: Date, endedAt: Date | null) {
-  if (!endedAt) return null;
-  return Math.max(1, Math.round((endedAt.getTime() - startedAt.getTime()) / 60000));
+function confidenceLabel(score: number) {
+  if (score >= 0.8) return "High confidence";
+  if (score >= 0.6) return "Building confidence";
+  return "Calibrating";
 }
 
 export default async function WorkoutSummaryPage({ params }: { params: Promise<{ sessionId: string }> }) {
@@ -31,218 +23,183 @@ export default async function WorkoutSummaryPage({ params }: { params: Promise<{
   const session = await prisma.workoutSession.findFirst({
     where: { id: sessionId, userId: user.id },
     include: {
-      routineDay: {
-        include: {
-          exercises: {
-            include: { exercise: true },
-            orderBy: { orderIndex: "asc" },
-          },
-        },
-      },
-      sets: {
-        include: { exercise: true },
-        orderBy: [{ exerciseId: "asc" }, { setIndex: "asc" }],
-      },
+      routineDay: { include: { exercises: { include: { exercise: true }, orderBy: { orderIndex: "asc" } } } },
+      sets: { include: { exercise: true }, orderBy: [{ exerciseId: "asc" }, { setIndex: "asc" }] },
     },
   });
-
   if (!session) notFound();
 
-  const exerciseIds = session.routineDay.exercises.map((rde) => rde.exerciseId);
-
-  // Pull ML recommendations persisted when this session was first loaded.
-  const recommendations = await prisma.recommendation.findMany({
-    where: {
-      userId: user.id,
-      exerciseId: { in: exerciseIds },
-      generatedAt: { gte: session.startedAt },
-    },
-    orderBy: { generatedAt: "desc" },
+  // Every exercise actually trained: routine order first, then anything swapped in.
+  const routineOrder = session.routineDay.exercises.map((r) => r.exerciseId);
+  const trainedIds = [...new Set(session.sets.map((s) => s.exerciseId))].sort((a, b) => {
+    const ia = routineOrder.indexOf(a);
+    const ib = routineOrder.indexOf(b);
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
   });
 
-  // De-duplicate: one recommendation per exercise (most recent wins).
-  const recByExercise = new Map<string, typeof recommendations[number]>();
-  for (const rec of recommendations) {
-    if (!recByExercise.has(rec.exerciseId)) {
-      recByExercise.set(rec.exerciseId, rec);
-    }
-  }
-
-  // All previous completed sessions for this user with relevant exercise history,
-  // used for PR detection and e1RM trend comparison.
-  const previousSessions = await prisma.workoutSession.findMany({
-    where: {
-      userId: user.id,
-      id: { not: sessionId },
-      endedAt: { not: null },
-      sets: { some: { exerciseId: { in: exerciseIds } } },
-    },
-    include: {
-      sets: {
-        where: { exerciseId: { in: exerciseIds }, isFailed: false },
-        select: { exerciseId: true, weight: true, reps: true },
+  const [recommendations, previousSessions] = await Promise.all([
+    prisma.recommendation.findMany({
+      where: { userId: user.id, exerciseId: { in: trainedIds }, generatedAt: { gte: session.startedAt } },
+      orderBy: { generatedAt: "desc" },
+    }),
+    prisma.workoutSession.findMany({
+      where: {
+        userId: user.id,
+        id: { not: sessionId },
+        endedAt: { not: null },
+        sets: { some: { exerciseId: { in: trainedIds } } },
       },
-    },
-    orderBy: { startedAt: "desc" },
-    take: 20,
-  });
+      include: {
+        sets: {
+          where: { exerciseId: { in: trainedIds }, isFailed: false },
+          select: { exerciseId: true, weight: true, reps: true },
+        },
+      },
+      orderBy: { startedAt: "desc" },
+      take: 20,
+    }),
+  ]);
 
-  // Per-exercise: session best and all-time historical best for PR detection.
-  type ExerciseSummary = {
-    name: string;
-    sessionBestWeight: number;
-    sessionBestReps: number;
-    sessionBestE1RM: number;
-    prevBestWeight: number;
-    prevBestE1RM: number;
-    prevSessionE1RM: number | null;
-    isWeightPR: boolean;
-    isE1RMPR: boolean;
-    rec: typeof recommendations[number] | undefined;
-  };
+  const recByExercise = new Map<string, (typeof recommendations)[number]>();
+  for (const rec of recommendations) if (!recByExercise.has(rec.exerciseId)) recByExercise.set(rec.exerciseId, rec);
 
-  const exerciseSummaries: ExerciseSummary[] = [];
+  const units = session.unitsSnapshot.toLowerCase();
 
-  for (const rde of session.routineDay.exercises) {
-    const exerciseId = rde.exerciseId;
-    const sessionSets = session.sets.filter((s) => s.exerciseId === exerciseId && !s.isFailed);
-    if (!sessionSets.length) continue;
+  const lifts = trainedIds.flatMap((exerciseId) => {
+    const sets = session.sets.filter((s) => s.exerciseId === exerciseId && !s.isFailed);
+    if (!sets.length) return [];
+    const name = session.sets.find((s) => s.exerciseId === exerciseId)!.exercise.name;
+    const topWeight = Math.max(...sets.map((s) => s.weight));
+    const topReps = Math.max(...sets.filter((s) => s.weight === topWeight).map((s) => s.reps));
+    const e1rm = Math.max(...sets.map((s) => estimated1RM(s.weight, s.reps)));
 
-    const sessionBestWeight = sessionSets.reduce((m, s) => Math.max(m, s.weight), 0);
-    const sessionBestReps = sessionSets
-      .filter((s) => s.weight === sessionBestWeight)
-      .reduce((m, s) => Math.max(m, s.reps), 0);
-    const sessionBestE1RM = sessionSets.reduce((m, s) => Math.max(m, estimated1RM(s.weight, s.reps)), 0);
+    const history = previousSessions.flatMap((p) => p.sets.filter((s) => s.exerciseId === exerciseId));
+    const prevBestWeight = history.reduce((m, s) => Math.max(m, s.weight), 0);
+    const prevBestE1RM = history.reduce((m, s) => Math.max(m, estimated1RM(s.weight, s.reps)), 0);
 
-    const histSets = previousSessions.flatMap((ps) => ps.sets.filter((s) => s.exerciseId === exerciseId));
-    const prevBestWeight = histSets.reduce((m, s) => Math.max(m, s.weight), 0);
-    const prevBestE1RM = histSets.reduce((m, s) => Math.max(m, estimated1RM(s.weight, s.reps)), 0);
-
-    // e1RM from the most recent prior session for trend arrow.
-    const mostRecentPriorSession = previousSessions.find((ps) =>
-      ps.sets.some((s) => s.exerciseId === exerciseId),
+    const lastSets = previousSessions.find((p) => p.sets.some((s) => s.exerciseId === exerciseId))?.sets.filter(
+      (s) => s.exerciseId === exerciseId,
     );
-    const prevSessionSets = mostRecentPriorSession?.sets.filter((s) => s.exerciseId === exerciseId) ?? [];
-    const prevSessionE1RM =
-      prevSessionSets.length > 0
-        ? prevSessionSets.reduce((m, s) => Math.max(m, estimated1RM(s.weight, s.reps)), 0)
-        : null;
+    const lastTop = lastSets?.length ? Math.max(...lastSets.map((s) => s.weight)) : null;
 
-    exerciseSummaries.push({
-      name: rde.exercise.name,
-      sessionBestWeight,
-      sessionBestReps,
-      sessionBestE1RM,
-      prevBestWeight,
-      prevBestE1RM,
-      prevSessionE1RM,
-      isWeightPR: histSets.length > 0 && sessionBestWeight > prevBestWeight,
-      isE1RMPR: histSets.length > 0 && sessionBestE1RM > prevBestE1RM,
-      rec: recByExercise.get(exerciseId),
-    });
-  }
+    return [
+      {
+        name,
+        topWeight,
+        topReps,
+        e1rm,
+        trend: liftTrend(topWeight, lastTop),
+        isWeightPR: history.length > 0 && topWeight > prevBestWeight,
+        isE1RMPR: history.length > 0 && e1rm > prevBestE1RM,
+        prevBestWeight,
+        rec: recByExercise.get(exerciseId),
+      },
+    ];
+  });
 
   const totalVolume = session.sets.reduce((sum, s) => sum + s.weight * s.reps, 0);
-  const duration = sessionDurationMinutes(session.startedAt, session.endedAt);
-  const prCount = exerciseSummaries.filter((e) => e.isWeightPR || e.isE1RMPR).length;
+  const minutes = session.endedAt
+    ? Math.max(1, Math.round((session.endedAt.getTime() - session.startedAt.getTime()) / 60000))
+    : null;
+  const prs = lifts.filter((l) => l.isWeightPR || l.isE1RMPR);
+  const volumeLabel = totalVolume >= 10000 ? `${(totalVolume / 1000).toFixed(1)}k` : Math.round(totalVolume).toLocaleString();
 
   return (
-    <ScreenShell>
-      {/* Header */}
-      <header className="glass-card-strong rounded-2xl p-4">
-        <p className="text-[10px] uppercase tracking-[0.22em] text-orange-200/70">
-          {session.routineDay.label} Complete
-        </p>
-        <h1 className="mt-1 text-3xl font-bold text-white">Workout Done</h1>
-        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-          <div className="rounded-xl bg-white/8 px-2.5 py-2 text-center">
-            <p className="text-zinc-300/70">Volume</p>
-            <p className="font-semibold text-white">{Math.round(totalVolume).toLocaleString()}</p>
+    <ScreenShell showBack={false}>
+      <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:items-start lg:gap-8 lg:space-y-0">
+        <div className="space-y-4">
+          <div>
+            <SectionLabel>{session.routineDay.label} complete</SectionLabel>
+            <h1 className="mt-1 font-serif text-5xl leading-[0.95] lg:text-7xl">Nice work.</h1>
           </div>
-          <div className="rounded-xl bg-white/8 px-2.5 py-2 text-center">
-            <p className="text-zinc-300/70">Duration</p>
-            <p className="font-semibold text-white">{duration ? `${duration}m` : "—"}</p>
+
+          <div className="flex gap-2">
+            <StatTile value={minutes ? `${minutes}m` : "—"} label="Time" />
+            <StatTile value={volumeLabel} label={`Volume ${units}`} />
+            <StatTile value={String(prs.length)} label="PRs" tone={prs.length ? "accent" : "default"} />
           </div>
-          <div className="rounded-xl bg-white/8 px-2.5 py-2 text-center">
-            <p className="text-zinc-300/70">PRs Hit</p>
-            <p className={`font-semibold ${prCount > 0 ? "text-orange-300" : "text-white"}`}>
-              {prCount > 0 ? `🏆 ${prCount}` : "—"}
-            </p>
+
+          {prs.map((pr) => (
+            <Card key={pr.name} tone="accent">
+              <SectionLabel>🏆 New PR</SectionLabel>
+              <p className="mt-1 text-base font-bold">
+                {pr.name} {pr.topWeight} {units} × {pr.topReps}
+              </p>
+              <p className="mt-0.5 text-xs text-muted-2">
+                {[
+                  pr.isWeightPR ? `+${Math.round((pr.topWeight - pr.prevBestWeight) * 100) / 100} ${units} over your old best` : "",
+                  pr.isE1RMPR ? `est. 1RM ${pr.e1rm.toFixed(0)} ${units}` : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </Card>
+          ))}
+
+          <div className="hidden space-y-2 lg:block">
+            <Link href="/home" className={buttonClass("primary", "lg")}>
+              Done
+            </Link>
+            <Link href="/history" className={buttonClass("ghost")}>
+              View history
+            </Link>
           </div>
         </div>
-      </header>
 
-      {/* Next session recommendations — driven by ML */}
-      <section className="mt-3 space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-zinc-300/70">Next Session Plan</p>
-
-        {exerciseSummaries.map((entry) => {
-          const rec = entry.rec;
-          const { symbol, color } = trendArrow(entry.sessionBestE1RM, entry.prevSessionE1RM);
-          const conf = rec ? confidenceLabel(rec.confidenceScore) : null;
-          const isPR = entry.isWeightPR || entry.isE1RMPR;
-
-          return (
-            <div
-              key={entry.name}
-              className={`glass-card rounded-2xl p-4 ${isPR ? "border border-orange-500/30" : ""}`}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="font-semibold text-white">{entry.name}</p>
-                  {isPR ? (
-                    <p className="mt-0.5 text-xs font-medium text-orange-300">
-                      {entry.isWeightPR ? "Weight PR" : ""}
-                      {entry.isWeightPR && entry.isE1RMPR ? " · " : ""}
-                      {entry.isE1RMPR ? "Est. 1RM PR" : ""}
+        <div className="space-y-3">
+          <SectionLabel>Lifts and next time</SectionLabel>
+          {lifts.length === 0 ? (
+            <Card>
+              <p className="text-sm text-muted-2">No sets were logged in this workout.</p>
+            </Card>
+          ) : (
+            lifts.map((lift) => (
+              <Card key={lift.name} className="space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-bold">{lift.name}</p>
+                    <p className="text-[11px] text-muted">
+                      Best set {lift.topWeight} × {lift.topReps} · e1RM {lift.e1rm.toFixed(0)}
                     </p>
-                  ) : null}
-                </div>
-                <div className="flex items-center gap-1.5 text-sm">
-                  <span className={`font-bold ${color}`}>{symbol}</span>
-                  <span className="text-xs text-zinc-300/70">
-                    e1RM {entry.sessionBestE1RM.toFixed(0)} {session.unitsSnapshot}
-                  </span>
-                </div>
-              </div>
-
-              {rec ? (
-                <div className="mt-3 rounded-xl bg-white/6 px-3 py-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-zinc-300/60">Next time</p>
-                      <p className="mt-0.5 text-xl font-bold text-white">
-                        {rec.recommendedWeight} {session.unitsSnapshot}
-                      </p>
-                      <p className="text-xs text-zinc-300/75">
-                        {rec.recommendedSets} sets × {rec.recommendedRepLow}–{rec.recommendedRepHigh} reps
-                      </p>
-                    </div>
-                    {conf ? (
-                      <span className={`text-[11px] font-medium ${conf.color}`}>{conf.label}</span>
-                    ) : null}
                   </div>
-                  <p className="mt-2 text-xs text-zinc-300/65">{rec.reasonText}</p>
-                </div>
-              ) : (
-                <div className="mt-3 rounded-xl bg-white/6 px-3 py-2.5">
-                  <p className="text-xs text-zinc-300/70">
-                    Keep working around {entry.sessionBestWeight} {session.unitsSnapshot}. More data will improve recommendations.
+                  <p
+                    className={`tabular shrink-0 text-sm font-bold ${
+                      lift.trend === "up" ? "text-accent" : lift.trend === "down" ? "text-warn" : "text-muted-2"
+                    }`}
+                  >
+                    {lift.trend === "up" ? "↑" : lift.trend === "down" ? "↓" : lift.trend === "hold" ? "=" : "new"}{" "}
+                    {lift.trend === "new" ? "" : `${lift.topWeight}`}
                   </p>
                 </div>
-              )}
-            </div>
-          );
-        })}
-      </section>
-
-      <div className="mt-4 space-y-2 pb-24">
-        <Link href="/home" className="glass-button block text-center">
-          Back Home
-        </Link>
-        <Link href="/history" className="glass-button-ghost block text-center">
-          View History
-        </Link>
+                {lift.rec ? (
+                  <div className="rounded-xl bg-bg px-3 py-2.5">
+                    <div className="flex items-end justify-between gap-2">
+                      <div>
+                        <SectionLabel>Next time</SectionLabel>
+                        <p className="tabular font-serif text-3xl leading-none">
+                          {lift.rec.recommendedWeight} <span className="text-base text-muted-2">{units}</span>
+                        </p>
+                        <p className="mt-1 text-xs text-muted-2">
+                          {lift.rec.recommendedSets} × {lift.rec.recommendedRepLow}–{lift.rec.recommendedRepHigh}
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-bold text-muted">{confidenceLabel(lift.rec.confidenceScore)}</span>
+                    </div>
+                    <p className="mt-2 text-xs text-muted">{lift.rec.reasonText}</p>
+                  </div>
+                ) : null}
+              </Card>
+            ))
+          )}
+          <div className="space-y-2 pt-2 lg:hidden">
+            <Link href="/home" className={buttonClass("primary", "lg")}>
+              Done
+            </Link>
+            <Link href="/history" className={buttonClass("ghost")}>
+              View history
+            </Link>
+          </div>
+        </div>
       </div>
     </ScreenShell>
   );
