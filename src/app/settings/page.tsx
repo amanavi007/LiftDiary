@@ -6,7 +6,7 @@ export default async function SettingsPage() {
   const user = await requireUser();
 
   return (
-    <ScreenShell>
+    <ScreenShell showBack={false}>
       <SettingsForm
         initial={{
           units: user.units,

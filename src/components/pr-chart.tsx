@@ -1,29 +1,66 @@
 "use client";
 
-import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-export function PRChart({ data }: { data: { date: string; e1rm: number }[] }) {
-  if (!data.length) return <p className="text-xs text-zinc-500">No trend data yet.</p>;
+type Point = { date: string; e1rm: number };
+
+function shortDate(iso: string) {
+  const d = new Date(iso); // rendered in the viewer's local time zone
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+export function PRChart({ data, unit }: { data: Point[]; unit: string }) {
+  if (!data.length) return <p className="text-xs text-muted">No trend data yet.</p>;
+  if (data.length === 1) {
+    return (
+      <p className="text-xs text-muted-2">
+        One session so far ({data[0].e1rm} {unit} est. 1RM). The trend line appears after your second session.
+      </p>
+    );
+  }
 
   return (
-    <div className="h-44 w-full">
+    <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data.slice(-12)}>
-          <XAxis dataKey="date" tick={{ fontSize: 10 }} hide />
-          <YAxis tick={{ fontSize: 10 }} domain={["auto", "auto"]} />
-          <Tooltip
-            cursor={{ stroke: "rgba(255,255,255,0.25)", strokeWidth: 1 }}
-            contentStyle={{
-              background: "rgba(8, 8, 10, 0.96)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              borderRadius: "12px",
-              color: "#f4f4f5",
-              boxShadow: "0 12px 30px rgba(0, 0, 0, 0.45)",
-            }}
-            labelStyle={{ color: "#d4d4d8", fontSize: 12 }}
-            itemStyle={{ color: "#ffffff", fontSize: 12 }}
+        <LineChart data={data.slice(-16)} margin={{ top: 8, right: 8, bottom: 0, left: -12 }}>
+          <CartesianGrid stroke="#23252b" vertical={false} />
+          <XAxis
+            dataKey="date"
+            tickFormatter={shortDate}
+            tick={{ fontSize: 10, fill: "#7b7d86" }}
+            axisLine={false}
+            tickLine={false}
+            minTickGap={24}
           />
-          <Line type="monotone" dataKey="e1rm" stroke="#e4e4e7" strokeWidth={2} dot={false} />
+          <YAxis
+            tick={{ fontSize: 10, fill: "#7b7d86" }}
+            domain={["auto", "auto"]}
+            allowDecimals={false}
+            tickFormatter={(v) => String(Math.round(Number(v)))}
+            axisLine={false}
+            tickLine={false}
+            width={44}
+          />
+          <Tooltip
+            cursor={{ stroke: "#23252b", strokeWidth: 1 }}
+            contentStyle={{
+              background: "#181a1f",
+              border: "1px solid #23252b",
+              borderRadius: 12,
+              color: "#ece9e4",
+            }}
+            labelFormatter={(label) => shortDate(String(label))}
+            formatter={(value) => [`${value} ${unit}`, "Est. 1RM"]}
+          />
+          <Line
+            type="monotone"
+            dataKey="e1rm"
+            isAnimationActive={false}
+            stroke="#c6ff3d"
+            strokeWidth={2.5}
+            dot={{ r: 3, fill: "#c6ff3d", strokeWidth: 0 }}
+            activeDot={{ r: 5, fill: "#c6ff3d" }}
+          />
         </LineChart>
       </ResponsiveContainer>
     </div>

@@ -9,8 +9,8 @@ export default async function LoginPage() {
   if (user) redirect("/onboarding");
 
   return (
-    <ScreenShell showNav={false}>
-      <div className="pt-4">
+    <ScreenShell showNav={false} showBack={false}>
+      <div>
         <AuthForm mode="login" />
       </div>
     </ScreenShell>

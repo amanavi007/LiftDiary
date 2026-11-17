@@ -7,7 +7,7 @@ export default async function WorkoutSessionPage({ params }: { params: Promise<{
   const { sessionId } = await params;
 
   return (
-    <ScreenShell>
+    <ScreenShell showNav={false} showBack={false}>
       <WorkoutSessionClient sessionId={sessionId} />
     </ScreenShell>
   );

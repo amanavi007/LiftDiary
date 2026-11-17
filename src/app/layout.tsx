@@ -1,20 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { DM_Sans, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
   subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
   title: "LiftDiary",
-  description: "Mobile-first workout assistant with hybrid ML recommendations",
+  description: "A workout log with a coach that learns your numbers",
   icons: {
     icon: "/logo.png",
     apple: "/logo.png",
@@ -26,6 +29,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
+  themeColor: "#101114",
 };
 
 export default function RootLayout({
@@ -36,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-full m-0 p-0`}
+        className={`${dmSans.variable} ${instrumentSerif.variable} font-sans antialiased h-full m-0 p-0`}
       >
         {children}
       </body>

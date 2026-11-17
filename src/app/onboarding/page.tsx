@@ -15,8 +15,8 @@ export default async function OnboardingPage({
   const mode = params.mode === "new" ? "new" : "edit";
 
   return (
-    <ScreenShell showNav={false}>
-      <OnboardingForm mode={mode} />
+    <ScreenShell showNav={false} showBack={false}>
+      <OnboardingForm mode={mode} isFirstTime={user.routines.length === 0} />
     </ScreenShell>
   );
 }
